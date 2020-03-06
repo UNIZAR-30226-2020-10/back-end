@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<script src="/static/Javascript/audio.js"></script>
+<head>
+    <meta charset="UTF-8">
+    <title>Música</title>
+</head>
+<body>
+
+    <form method="post">
+        {% for line in response %}
+            <script type="text/javascript">reproduce("{{ line }}");</script>
+            <!--<audio controls="controls" autoplay="autoplay" src="{{line}}"></audio>-->
+        {% endfor %}
+        <button type="submit">Click here</button>
+    </form>
+    <form action="/add" method="post">
+        {% for line in get_flashed_messages() %}
+            <p>{{ line }}</p>
+        {% endfor %}
+        <input name="name" />
+        <button type="submit">Add</button>
+    </form>
+</body>
+</html>
