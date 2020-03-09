@@ -14,13 +14,12 @@ app.config['SQLALCHEMY_DATABASE_URI'] = \
 
 db = SQLAlchemy(app)
 
-
 # Relaciones N:M
 
 # Relacion 'comprende'
 categorizacion = db.Table('categorizacion',
                           db.Column('categoria', db.String(20), db.ForeignKey('categoria.nombre')),
-                          db.Column('cancion', db.String(20), db.ForeignKey('cancion.id'))
+                          db.Column('cancion', db.Integer, db.ForeignKey('cancion.id'))
                           )
 # Relacion 'compone'
 composicion = db.Table('composicion',
@@ -38,10 +37,11 @@ aparicion = db.table('aparicion',
                      db.Column('cancion', db.Integer, db.ForeignKey('cancion.id'))
                      )
 # Relacion 'conoce'
-amistad = db.table('amistar',
-                     db.Column('usuario', db.String(25), db.ForeignKey('usuario.email')),
-                     db.Column('usuario', db.String(25), db.ForeignKey('usuario.email'))
-                     )
+amistad = db.table('amistad',
+                   db.Column('usuario', db.String(25), db.ForeignKey('usuario.email')),
+                   db.Column('usuario', db.String(25), db.ForeignKey('usuario.email'))
+                   )
+
 
 class Categoria(db.Model):
     nombre = db.Column(db.String(20), primary_key=True)
@@ -84,12 +84,13 @@ class Usuario(db.Model):
     segundo_ultima_cancion = db.Column(db.Integer)
     listas = db.relationship('Lista', backref='usuario')  # Relacion 'tiene'
     amistades = db.relationship('Usuario', secondary='amistades')
-    solicitudes_recibidas = db.relationship('Solicitud', backref='notificado')          # Relacion 'recibe'
-    canciones_recibidas = db.relationship('CancionCompartida', backref='notificado')    # Relacion 'recibe'
-    listas_recibidas = db.relationship('ListaCompartida', backref='notificado')         # Relacion 'recibe'
-    solicitudes_enviadas = db.relationship('Solicitud', backref='notificante')          # Relacion 'envia'
-    canciones_enviadas = db.relationship('CancionCompartida', backref='notificante')    # Relacion 'envia'
-    listas_enviadas = db.relationship('ListaCompartida', backref='notificante')         # Relacion 'envia'
+    solicitudes_recibidas = db.relationship('Solicitud', backref='notificado')  # Relacion 'recibe'
+    canciones_recibidas = db.relationship('CancionCompartida', backref='notificado')  # Relacion 'recibe'
+    listas_recibidas = db.relationship('ListaCompartida', backref='notificado')  # Relacion 'recibe'
+    solicitudes_enviadas = db.relationship('Solicitud', backref='notificante')  # Relacion 'envia'
+    canciones_enviadas = db.relationship('CancionCompartida', backref='notificante')  # Relacion 'envia'
+    listas_enviadas = db.relationship('ListaCompartida', backref='notificante')  # Relacion 'envia'
+
 
 class Solicitud(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -117,7 +118,7 @@ class Cancion(db.Model):
     nombre = db.Column(db.String(20), nullable=False)
     duracion = db.Column(db.Integer, nullable=False)  # Segundos
     nombre_album = db.Column(db.String(20), db.ForeignKey('album.nombre'))
-    comparticiones = db.relationship('CancionCompartida', backref='cancion') #  Relacion 'compartida'
+    comparticiones = db.relationship('CancionCompartida', backref='cancion')  # Relacion 'compartida'
     reproducciones = db.relationship('Usuario', backref='ultima_cancion')  # Relacion 'ultima'
 
 
