@@ -7,18 +7,15 @@
 </head>
 <body>
 
-    <form method="post">
+    <form method="ger">
         {% for line in response %}
             <script type="text/javascript">reproduce("{{ line }}");</script>
             <!--<audio controls="controls" autoplay="autoplay" src="{{line}}"></audio>-->
         {% endfor %}
         <button type="submit">Click here</button>
     </form>
-    <form action="/add" method="post">
-        {% for line in get_flashed_messages() %}
-            <p>{{ line }}</p>
-        {% endfor %}
-        <input name="name" />
+    <form action="/list_data" method="post">
+        <input name="list" />
         <button type="submit">Add</button>
     </form>
 </body>
