@@ -1,4 +1,5 @@
 from flask import *
+from sqlalchemy.exc import IntegrityError
 
 from db import *
 
@@ -16,7 +17,7 @@ def listar_canciones(dictionary, canciones):
         for artist in song.artistas:
             dictionary[song.id]["Artistas"].append(artist.nombre)
         dictionary[song.id]["Album"] = song.nombre_album
-        dictionary[song.id]["URL"] = song.audio
+        dictionary[song.id]["URL"] = song.path
     return dictionary
 
 
@@ -42,13 +43,12 @@ def list_lists():
 
 @app.route('/list_data', methods=['POST', 'GET'])
 def list_data():
-    lista = ""
     if request.method == "POST":
         lista = int(request.form['list'])
     else:
         lista = int(request.args['list'])
 
-    data_list = fetch_data(Lista, lista)
+    data_list = fetch_data_by_id(Lista, lista)
     if data_list == "error":
         return "error"
 
@@ -64,15 +64,20 @@ def list_data():
 @app.route('/create_list')
 def crear_lista():
     if request.method == "POST":
-        lista = int(request.form['list'])
-        desc = request.form['list']
+        lista = request.form['list']
+        desc = request.form['desc']
     else:
-        lista = int(request.args['list'])
-        desc = request.form['list']
+        lista = request.args['list']
+        desc = request.args['desc']
 
-    element = Lista(nombre=lista, descripcion=desc)
-    db.session.add(element)
-    db.session.commit()
+    try:
+        element = Lista(nombre=lista, descripcion=desc)
+        db.session.add(element)
+        db.session.commit()
+    except IntegrityError:
+        return "ERROR"
+    else:
+        return "Succes"
 
 
 @app.route('/add_to_list')
@@ -81,19 +86,21 @@ def add_to_list():
         cancion = int(request.form['cancion'])
         lista = int(request.form['list'])
     else:
-        cancion =int(request.args['cancion'])
+        cancion = int(request.args['cancion'])
         lista = int(request.args['list'])
 
-    data_list = fetch_data(Lista, lista)
+    data_list = fetch_data_by_id(Lista, lista)
     if data_list == "error":
         return "error_lista"
 
-    data_cancion = fetch_data(Cancion, cancion)
+    data_cancion = fetch_data_by_id(Cancion, cancion)
     if data_list == "error":
         return "error_cancion"
 
-    data_list.canciones.append(data_cancion)
-    db.session.commit()
-
-
-
+    try:
+        data_list.canciones.append(data_cancion)
+        db.session.commit()
+    except IntegrityError:
+        return "ERROR"
+    else:
+        return "Succes"

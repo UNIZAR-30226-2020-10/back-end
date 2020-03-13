@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+
 from app import app
 
 # Configuracion PostgreSQL
@@ -130,3 +131,15 @@ class Cancion(db.Model):
     nombre_album = db.Column(db.String(20), db.ForeignKey('album.nombre'))
     comparticiones = db.relationship('CancionCompartida', backref='cancion')  # Relacion 'compartida'
     reproducciones = db.relationship('Usuario', backref='ultima_cancion')  # Relacion 'ultima'
+
+
+def leer_todo(tabla):
+    return db.session.query(tabla).all()
+
+
+def fetch_data_by_id(table, clave):
+    data = db.session.query(table).filter_by(id=clave).all()
+    if len(data) == 1:
+        return data[0]
+    else:
+        return "error"
