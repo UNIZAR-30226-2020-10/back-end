@@ -77,7 +77,24 @@ def crear_lista():
     except IntegrityError:
         return "ERROR"
     else:
-        return "Succes"
+        return "Success"
+
+
+@app.route('/delete_list')
+def delete_lista():
+    if request.method == "POST":
+        lista = request.form['list']
+    else:
+        lista = request.args['list']
+
+    try:
+        element = db.session.query(Lista).filter_by(id=lista).all()
+        db.session.delete(element[0])
+        db.session.commit()
+    except IntegrityError:
+        return "ERROR"
+    else:
+        return "Success"
 
 
 @app.route('/add_to_list')
@@ -103,7 +120,7 @@ def add_to_list():
     except IntegrityError:
         return "ERROR"
     else:
-        return "Succes"
+        return "Success"
 
 
 @app.route('/test')
