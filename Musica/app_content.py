@@ -104,3 +104,12 @@ def add_to_list():
         return "ERROR"
     else:
         return "Succes"
+
+
+@app.route('/test')
+def test():
+    if request.method == "GET":
+
+        res = request.args['test']
+
+        return res
