@@ -66,6 +66,7 @@ class Album(db.Model):
     nombre = db.Column(db.String(20), primary_key=True)
     descripcion = db.Column(db.String(100))
     fecha = db.Column(db.DateTime)
+    foto = db.Column(db.String(50))
     canciones = db.relationship('Cancion', backref='album')  # Relacion 'compuesto'
 
 
@@ -84,6 +85,7 @@ class Usuario(db.Model):
     password = db.Column(db.String, nullable=False)
     fecha_nacimiento = db.Column(db.DateTime)
     pais = db.Column(db.String(40))
+    foto = db.Column(db.String(50))
     amistades = db.relationship('Usuario', secondary='amistad', primaryjoin=email == amistad.c.usuario1,
                                 secondaryjoin=amistad.c.usuario2 == email)
     listas = db.relationship('Lista', backref='usuario')  # Relacion 'tiene'
