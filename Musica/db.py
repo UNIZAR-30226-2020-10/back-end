@@ -86,6 +86,8 @@ class Usuario(db.Model):
     fecha_nacimiento = db.Column(db.DateTime)
     pais = db.Column(db.String(40))
     foto = db.Column(db.String(50))
+    token = db.Column(db.String(), unique=True)
+    fcm_token = db.Column(db.String(), unique=True)
     amistades = db.relationship('Usuario', secondary='amistad', primaryjoin=email == amistad.c.usuario1,
                                 secondaryjoin=amistad.c.usuario2 == email)
     listas = db.relationship('Lista', backref='usuario')  # Relacion 'tiene'
