@@ -1,6 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 
-from app import app
+from create_app import app
 
 # Configuracion PostgreSQL
 
@@ -85,24 +85,36 @@ class Usuario(db.Model):
     password = db.Column(db.String, nullable=False)
     fecha_nacimiento = db.Column(db.DateTime)
     pais = db.Column(db.String(40))
-    foto = db.Column(db.String(50))
+    # foto = db.Column(db.String(50))
     amistades = db.relationship('Usuario', secondary='amistad', primaryjoin=email == amistad.c.usuario1,
                                 secondaryjoin=amistad.c.usuario2 == email)
     listas = db.relationship('Lista', backref='usuario')  # Relacion 'tiene'
     id_ultima_cancion = db.Column(db.Integer, db.ForeignKey('cancion.id'))
     segundo_ultima_cancion = db.Column(db.Integer)
+
+    # Relacion 'recibe'
     solicitudes_recibidas = db.relationship('Solicitud', backref='notificado',
-                                            foreign_keys="Solicitud.email_usuario_notificado")  # Relacion 'recibe'
+                                            foreign_keys="Solicitud.email_usuario_notificado")
+
+    # Relacion 'envia'
     solicitudes_enviadas = db.relationship('Solicitud', backref='notificante',
-                                           foreign_keys="Solicitud.email_usuario_notificante")  # Relacion 'envia'
+                                           foreign_keys="Solicitud.email_usuario_notificante")
+
+    # Relacion 'recibe'
     listas_recibidas = db.relationship('ListaCompartida', backref='notificado',
-                                       foreign_keys="ListaCompartida.email_usuario_notificado")  # Relacion 'recibe'
+                                       foreign_keys="ListaCompartida.email_usuario_notificado")
+
+    # Relacion 'envia'
     listas_enviadas = db.relationship('ListaCompartida', backref='notificante',
-                                      foreign_keys="ListaCompartida.email_usuario_notificante")  # Relacion 'envia'
+                                      foreign_keys="ListaCompartida.email_usuario_notificante")
+
+    # Relacion 'envia'
     canciones_enviadas = db.relationship('CancionCompartida', backref='notificante',
-                                         foreign_keys="CancionCompartida.email_usuario_notificante")  # Relacion 'envia'
+                                         foreign_keys="CancionCompartida.email_usuario_notificante")
+
+    # Relacion 'recibe'
     canciones_recibidas = db.relationship('CancionCompartida', backref='notificado',
-                                          foreign_keys="CancionCompartida.email_usuario_notificado")  # Relacion 'recibe'
+                                          foreign_keys="CancionCompartida.email_usuario_notificado")
 
 
 class Solicitud(db.Model):
@@ -133,6 +145,9 @@ class Cancion(db.Model):
     nombre_album = db.Column(db.String(20), db.ForeignKey('album.nombre'))
     comparticiones = db.relationship('CancionCompartida', backref='cancion')  # Relacion 'compartida'
     reproducciones = db.relationship('Usuario', backref='ultima_cancion')  # Relacion 'ultima'
+
+
+db.create_all()
 
 
 def leer_todo(tabla):

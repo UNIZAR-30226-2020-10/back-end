@@ -1,5 +1,4 @@
-from create_app import app
-import app_content
+from app_content import *
 
 if __name__ == '__main__':
     app.run()
