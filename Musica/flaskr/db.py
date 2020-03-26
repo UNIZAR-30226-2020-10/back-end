@@ -1,6 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 
-from flaskr.__init__ import app
+from flaskr import create_app
 
 # Configuracion PostgreSQL
 
@@ -8,6 +8,8 @@ POSTGRES_URL = "127.0.0.1:5432"
 POSTGRES_USER = "admin"
 POSTGRES_PW = "admin"
 POSTGRES_DB = "test"
+
+app = create_app()
 
 app.config['SQLALCHEMY_DATABASE_URI'] = \
     'postgresql+psycopg2://{user}:{pw}@{url}/{db}'. \

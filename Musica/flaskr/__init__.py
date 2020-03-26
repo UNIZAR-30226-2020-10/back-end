@@ -1,4 +1,8 @@
 from flask import Flask
 
-app = Flask(__name__)
-app.secret_key = b'sdfg`2wer_.t/*af'
+
+def create_app():
+    app_created = Flask(__name__)
+    app_created.secret_key = 'development'
+
+    return app_created
