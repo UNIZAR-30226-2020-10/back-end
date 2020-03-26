@@ -1,6 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 
-from create_app import app
+from flaskr.__init__ import app
 
 # Configuracion PostgreSQL
 

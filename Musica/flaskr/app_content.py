@@ -2,8 +2,11 @@ from flask import *
 from psycopg2.errors import UniqueViolation, InvalidDatetimeFormat
 from sqlalchemy.exc import IntegrityError, DataError
 
-from db import *
+from flaskr.db import *
 
+## BUSQUEDA DE CANCIONES Y LISTAS NOMBRE, ARTISTA, ALBUM / CATEGORIAS
+## ORDENAR CANCIONES Y LISTAS
+## AÑADIR / ELIMINAR / MODIFICAR CATEGORIAS
 
 @app.route('/')
 def index():
@@ -22,6 +25,26 @@ def listar_canciones(dictionary, canciones):
         dictionary[song.id]["Imagen"] = song.album.foto
         dictionary[song.id]["URL"] = song.path
     return dictionary
+
+
+def obtain_song_list(request):
+    if request.method == "POST":
+        data = request.get_json()
+        cancion = data['cancion']
+        lista = data['list']
+    else:
+        cancion = int(request.args['cancion'])
+        lista = int(request.args['list'])
+
+    data_list = fetch_data_by_id(Lista, lista)
+    if data_list == "error":
+        return "Error_lista"
+
+    data_cancion = fetch_data_by_id(Cancion, cancion)
+    if data_cancion == "error":
+        return "Error_cancion"
+
+    return data_cancion, data_list
 
 
 @app.route('/list')
@@ -114,26 +137,6 @@ def delete_lista():
         return "Success"
 
 
-def obtain_song_list(request):
-    if request.method == "POST":
-        data = request.get_json()
-        cancion = data['cancion']
-        lista = data['list']
-    else:
-        cancion = int(request.args['cancion'])
-        lista = int(request.args['list'])
-
-    data_list = fetch_data_by_id(Lista, lista)
-    if data_list == "error":
-        return "Error_lista"
-
-    data_cancion = fetch_data_by_id(Cancion, cancion)
-    if data_cancion == "error":
-        return "Error_cancion"
-
-    return data_cancion, data_list
-
-
 @app.route('/add_to_list')
 def add_to_list():
     data_cancion, data_list = obtain_song_list(request)
@@ -160,6 +163,20 @@ def delete_from_list():
         return "Error"
     else:
         return "Success"
+
+
+@app.route('/search_song')
+def search_song():
+    if request.method == "POST":
+        data = request.get_json()
+        nombre = data["Nombre"]
+
+    else:
+        nombre = request.args["Nombre"]
+
+    canciones = db.session.query(Cancion).filter_by(nombre=nombre).all()
+
+    return listar_canciones({}, canciones)
 
 
 @app.route('/test')
@@ -213,33 +230,23 @@ def delete_user():
     if request.method == 'POST':
         data = request.get_json()
         email = data["email"]
-        nombre = data["nombre"]
         password = data["password"]
-        fecha = data["fecha"]
-        pais = data["pais"]
-
     else:
         email = request.args["email"]
-        nombre = request.args["nombre"]
         password = request.args["password"]
-        fecha = request.args["fecha"]
-        pais = request.args["pais"]
 
-    user = Usuario(nombre=nombre, email=email, password=password, fecha_nacimiento=fecha, pais=pais)
+    user = db.session.query(Usuario).filter_by(email=email).all()
 
-    try:
-        db.session.add(user)
-        db.session.commit()
-    except IntegrityError as e:
+    if not user:
+        return "No user"
 
-        if isinstance(e.orig, UniqueViolation):
-            return "Clave duplicada"
-        else:
+    user = user[0]
+    if user.password == password:
+        try:
+            db.session.delete(user)
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
             return "Error"
-
-    except DataError as e:
-
-        if isinstance(e.orig, InvalidDatetimeFormat):
-            return "Fecha incorrecta"
 
     return "Success"

@@ -1,5 +1,4 @@
-from app import app
-from db import *
+from flaskr.db import *
 import datetime
 
 

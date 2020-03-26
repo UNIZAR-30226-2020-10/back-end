@@ -3,10 +3,7 @@ import unittest
 import pycurl as p
 import io
 
-from sqlalchemy.exc import IntegrityError
-
-from app import app
-from db import *
+from flaskr.db import *
 
 
 def curl(url):
@@ -28,25 +25,37 @@ def is_json(myjson):
     return True, json_object
 
 
-def insertar_cancion_album():
+def insertar_cancion(nombre_cancion, nombre_album):
 
-    album = db.session.query(Album).filter_by(nombre="Album1").all()
-    cancion = db.session.query(Cancion).filter_by(nombre="Song1").all()
+    cancion = Cancion(nombre=nombre_cancion, path="url", duracion=123, nombre_album=nombre_album)
 
-    if album or cancion:
-        delete_cancion_album(cancion[0], album[0])
+    db.session.add(cancion)
+    db.session.commit()
 
-    album = Album(nombre="Album1", descripcion="Album1", fecha="20-12-1999", foto="Foto1")
-    cancion = Cancion(nombre="Song1", path="url", duracion=123, nombre_album=album.nombre)
+    return cancion
+
+
+def insertar_album(nombre_album):
+    album = db.session.query(Album).filter_by(nombre=nombre_album).all()
+    if album:
+        delete_album(album[0])
+
+    album = Album(nombre=nombre_album, descripcion="Album1", fecha="20-12-1999", foto="Foto1")
 
     db.session.add(album)
-    db.session.add(cancion)
-
     db.session.commit()
+
+    return album
+
+
+def insertar_cancion_album(nombre_cancion, nombre_album):
+    album = insertar_album(nombre_album)
+    cancion = insertar_cancion(nombre_cancion, album.nombre)
+
     return cancion, album
 
-def insert_lista_test():
 
+def insert_lista_test():
     lista = db.session.query(Lista).filter_by(nombre="TEST_LIST").all()
     if lista:
         delete_lista_test(lista[0])
@@ -57,15 +66,36 @@ def insert_lista_test():
 
     return lista
 
+
 def delete_lista_test(lista):
     db.session.delete(lista)
     db.session.commit()
 
 
-def delete_cancion_album(cancion, album):
-    db.session.delete(album)
+def delete_cancion(cancion):
     db.session.delete(cancion)
     db.session.commit()
+
+
+def delete_album(album):
+    db.session.delete(album)
+    db.session.commit()
+
+
+def delete_cancion_album(cancion, album):
+    delete_album(album)
+    delete_cancion(cancion)
+
+
+def comprobar_json(obj, status, res, res_esperado):
+    obj.assertRegex(str(status), '2[0-9][0-9]', "Peticion no exitosa")
+
+    correcto, data = is_json(res)
+    obj.assertEqual(correcto, True, "El contenido devuelto no tiene el formato correcto")
+
+    obj.assertEqual(data, res_esperado)
+
+    print(data)
 
 
 class MyTestCase(unittest.TestCase):
@@ -77,18 +107,15 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(res, "Success", "El mensaje no coindice")
 
     def test_list(self):
-
-        cancion, album = insertar_cancion_album()
+        cancion, album = insertar_cancion_album("Song1", "Album1")
 
         status, res = curl('http://localhost:5000/list')
-        self.assertRegex(str(status), '2[0-9][0-9]', "Peticion no exitosa")
-
-        correcto, data = is_json(res)
-        self.assertEqual(correcto, True, "El contenido devuelto no tiene el formato correcto")
 
         res_esperado = {str(cancion.id): {"ID": cancion.id, "Nombre": cancion.nombre, "Artistas": cancion.artistas,
-                            "URL": cancion.path, "Imagen": cancion.album.foto, "Album": cancion.nombre_album}}
-        self.assertEqual(data, res_esperado)
+                                          "URL": cancion.path, "Imagen": cancion.album.foto,
+                                          "Album": cancion.nombre_album}}
+
+        comprobar_json(self, status, res, res_esperado)
 
         delete_cancion_album(cancion, album)
 
@@ -102,7 +129,7 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(correcto, True, "El contenido devuelto no tiene el formato correcto")
 
         res_esperado = {str(lista.id): {"ID": lista.id, "Nombre": lista.nombre, "Imagen": "default",
-                                          "Desc": lista.descripcion}}
+                                        "Desc": lista.descripcion}}
         self.assertEqual(data, res_esperado)
 
         delete_lista_test(lista)
@@ -143,6 +170,24 @@ class MyTestCase(unittest.TestCase):
         db.session.delete(cancion)
         db.session.commit()
 
+    def test_search_song(self):
+        cancion, album = insertar_cancion_album("Song1", "Album1")
+        cancion2 = insertar_cancion(cancion.nombre, album.nombre)
+        status, res = curl('http://localhost:5000/search_song?Nombre=%s' % cancion.nombre)
+
+        res_esperado = {str(cancion.id): {"ID": cancion.id, "Nombre": cancion.nombre, "Artistas": cancion.artistas,
+                                          "URL": cancion.path, "Imagen": cancion.album.foto,
+                                          "Album": cancion.nombre_album},
+                        str(cancion2.id): {"ID": cancion2.id, "Nombre": cancion2.nombre, "Artistas": cancion2.artistas,
+                                          "URL": cancion2.path, "Imagen": cancion2.album.foto,
+                                          "Album": cancion2.nombre_album}
+                        }
+
+        comprobar_json(self, status, res, res_esperado)
+
+        delete_cancion(cancion2)
+        delete_cancion_album(cancion, album)
+
     # Test complementarios a implementar:
     #   Crear una lista de reproduccion - Done
     #   Añadir una cancion - Done
@@ -150,6 +195,7 @@ class MyTestCase(unittest.TestCase):
     #   Eliminar cancion de la lista - Done
     #   Eliminar lista - Done
     #   Listar Canciones de una lista
+    #   Busquedas
 
 
 if __name__ == '__main__':
