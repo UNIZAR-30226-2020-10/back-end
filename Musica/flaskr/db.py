@@ -85,7 +85,9 @@ class Usuario(db.Model):
     password = db.Column(db.String, nullable=False)
     fecha_nacimiento = db.Column(db.DateTime)
     pais = db.Column(db.String(40))
-    # foto = db.Column(db.String(50))
+    foto = db.Column(db.String(50))
+    token = db.Column(db.String(), unique=True)
+    fcm_token = db.Column(db.String(), unique=True)
     amistades = db.relationship('Usuario', secondary='amistad', primaryjoin=email == amistad.c.usuario1,
                                 secondaryjoin=amistad.c.usuario2 == email)
     listas = db.relationship('Lista', backref='usuario')  # Relacion 'tiene'
@@ -145,9 +147,6 @@ class Cancion(db.Model):
     nombre_album = db.Column(db.String(20), db.ForeignKey('album.nombre'))
     comparticiones = db.relationship('CancionCompartida', backref='cancion')  # Relacion 'compartida'
     reproducciones = db.relationship('Usuario', backref='ultima_cancion')  # Relacion 'ultima'
-
-
-db.create_all()
 
 
 def leer_todo(tabla):
