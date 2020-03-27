@@ -14,7 +14,8 @@ def index():
     return render_template("index.html")
 
 
-def listar_canciones(dictionary, canciones):
+def listar_canciones(canciones):
+    dictionary = {}
     for song in canciones:
         dictionary[song.id] = {}
         dictionary[song.id]["ID"] = song.id
@@ -28,17 +29,22 @@ def listar_canciones(dictionary, canciones):
     return dictionary
 
 
-def listar_listas(dictionary, listas):
+def listar_listas(listas):
+    dictionary = {}
     for element in listas:
-        dictionary[element.id] = {}
-        dictionary[element.id]["ID"] = element.id
-        dictionary[element.id]["Nombre"] = element.nombre
-        dictionary[element.id]["Desc"] = element.descripcion
+        dictionary[element.id] = listar_datos_lista(element, False)
 
-        if not element.canciones:
-            dictionary[element.id]["Imagen"] = "default"
-        else:
-            dictionary[element.id]["Imagen"] = element.canciones[0].album.foto
+    return dictionary
+
+
+def listar_datos_lista(listas, canciones):
+    dictionary = {"ID": listas.id, "Nombre": listas.nombre, "Desc": listas.descripcion}
+    if canciones:
+        dictionary["Canciones"] = listar_canciones(listas.canciones)
+    if not listas.canciones:
+        dictionary["Imagen"] = "default"
+    else:
+        dictionary["Imagen"] = listas.canciones[0].album.foto
 
     return dictionary
 
@@ -131,7 +137,7 @@ def list_songs():
         canciones = leer_todo(Cancion)
     except None:
         return "Error"
-    dict_songs = listar_canciones({}, canciones)
+    dict_songs = listar_canciones(canciones)
     return jsonify(dict_songs)
 
 
@@ -141,7 +147,7 @@ def list_lists():
         listas = leer_todo(Lista)
     except None:
         return "Error"
-    dict_listas = listar_listas({}, listas)
+    dict_listas = listar_listas(listas)
     return jsonify(dict_listas)
 
 
@@ -157,13 +163,7 @@ def list_data():
     if data_list == "Error":
         return "Error"
 
-    dict_lista = {data_list.id: {}}
-    dict_lista[data_list.id]["ID"] = data_list.id
-    dict_lista[data_list.id]["Nombre"] = data_list.nombre
-    dict_lista[data_list.id]["Desc"] = data_list.descripcion
-    dict_lista[data_list.id]["Canciones"] = listar_canciones(dict_lista[data_list.id]["Canciones"], data_list.canciones)
-    dict_lista[data_list.id]["Imagen"] = data_list.canciones[0].album.foto
-
+    dict_lista = {data_list.id: listar_datos_lista(data_list, True)}
     return jsonify(dict_lista)
 
 
@@ -237,46 +237,46 @@ def delete_from_list():
 @app.route('/search_song')
 def search_song():
     canciones = buscar(request, Cancion, "nombre")
-    return jsonify(listar_canciones({}, canciones))
+    return jsonify(listar_canciones(canciones))
 
 
 @app.route('/search_list')
 def search_list():
     listas = buscar(request, Lista, "nombre")
-    return jsonify(listar_listas({}, listas))
+    return jsonify(listar_listas(listas))
 
 
 @app.route('/search_song_by_album')
 def search_song_by_album():
     canciones = buscar(request, Cancion, "album")
-    result = listar_canciones({}, canciones)
+    result = listar_canciones(canciones)
     return jsonify(result)
 
 
 @app.route('/search_song_by_artist')
 def search_song_by_artist():
     canciones = buscar(request, Artista, "artista")
-    result = listar_canciones({}, canciones)
+    result = listar_canciones(canciones)
     return jsonify(result)
 
 
 @app.route('/search_song_list')
 def search_song_list():
     canciones = buscar_lista(request, "cancion")
-    return jsonify(listar_canciones({}, canciones))
+    return jsonify(listar_canciones(canciones))
 
 
 @app.route('/search_song_by_album_list')
 def search_song_by_album_list():
     canciones = buscar_lista(request, "album")
-    result = listar_canciones({}, canciones)
+    result = listar_canciones(canciones)
     return jsonify(result)
 
 
 @app.route('/search_song_by_artist_list')
 def search_song_by_artist_list():
     canciones = buscar_lista(request, "artista")
-    result = listar_canciones({}, canciones)
+    result = listar_canciones(canciones)
     return jsonify(result)
 
 

@@ -130,6 +130,23 @@ class MyTestCase(unittest.TestCase):
 
         delete_lista_test(lista)
 
+    def test_list_data(self):
+        cancion, album = insertar_cancion_album("Song1", "Album1")
+        lista = insert_lista_test()
+        lista.canciones.append(cancion)
+        db.session.add(lista)
+        db.session.commit()
+
+        status, res = curl('http://localhost:5000/list_data?list=%s' % lista.id)
+
+        res_esperado = {str(lista.id): {"ID": lista.id, "Nombre": lista.nombre, "Imagen": lista.canciones[0].album.foto,
+                                        "Desc": lista.descripcion,
+                                        "Canciones": get_single_song_esperado(cancion)}}
+        comprobar_json(self, status, res, res_esperado)
+
+        delete_lista_test(lista)
+        delete_cancion_album(cancion, album)
+
     def test_crear_lista(self):
         status, res = curl('http://localhost:5000/create_list?list=TEST_LIST&desc=TEST_DESC')
         self.assertRegex(str(status), '2[0-9][0-9]', "Peticion no exitosa")
@@ -272,7 +289,6 @@ class MyTestCase(unittest.TestCase):
         db.session.delete(artista)
         delete_lista_test(lista)
         delete_cancion_album(cancion, album)
-
 
     # Test complementarios a implementar:
     #   Crear una lista de reproduccion - Done
