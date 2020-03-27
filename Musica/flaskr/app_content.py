@@ -4,6 +4,7 @@ from sqlalchemy.exc import IntegrityError, DataError
 
 from flaskr.db import *
 
+
 ## BUSQUEDA DE CANCIONES Y LISTAS NOMBRE, ARTISTA, ALBUM / CATEGORIAS
 ## ORDENAR CANCIONES Y LISTAS
 ## AÑADIR / ELIMINAR / MODIFICAR CATEGORIAS
@@ -27,6 +28,21 @@ def listar_canciones(dictionary, canciones):
     return dictionary
 
 
+def listar_listas(dictionary, listas):
+    for element in listas:
+        dictionary[element.id] = {}
+        dictionary[element.id]["ID"] = element.id
+        dictionary[element.id]["Nombre"] = element.nombre
+        dictionary[element.id]["Desc"] = element.descripcion
+
+        if not element.canciones:
+            dictionary[element.id]["Imagen"] = "default"
+        else:
+            dictionary[element.id]["Imagen"] = element.canciones[0].album.foto
+
+    return dictionary
+
+
 def obtain_song_list(request):
     if request.method == "POST":
         data = request.get_json()
@@ -47,32 +63,85 @@ def obtain_song_list(request):
     return data_cancion, data_list
 
 
+def buscar(req, donde, que):
+    if req.method == "POST":
+        data = req.get_json()
+        dato = data["Nombre"]
+
+    else:
+        dato = req.args["Nombre"]
+
+    datos = buscar_sub(donde, que, dato)
+
+    return datos
+
+
+def buscar_sub(donde, que, dato):
+    try:
+        if que == "nombre":
+            datos = db.session.query(donde).filter_by(nombre=dato).all()
+        elif que == "album":
+            datos = db.session.query(donde).filter_by(nombre_album=dato).all()
+        elif que == "artista":
+            artista = db.session.query(donde).filter_by(nombre=dato).all()
+            datos = artista[0].composiciones
+
+    except IntegrityError:
+        return "Error"
+
+    return datos
+
+
+def buscar_lista(req, tipo):
+    if req.method == "POST":
+        data = req.get_json()
+        dato = data["Nombre"]
+        lista = data["Lista"]
+
+    else:
+        dato = req.args["Nombre"]
+        lista = req.args["Lista"]
+
+    try:
+        lista = fetch_data_by_id(Lista, int(lista))
+
+        if lista == "error":
+            return "Error"
+
+        if tipo == "cancion":
+            datos = [cancion for cancion in lista.canciones if cancion.nombre == dato]
+        elif tipo == "album":
+            datos = [cancion for cancion in lista.canciones if cancion.nombre_album == dato]
+        elif tipo == "artista":
+            artista = db.session.query(Artista).filter_by(nombre=dato).all()
+            datos = [cancion for cancion in artista[0].composiciones if cancion in lista.canciones]
+        else:
+            return "Error"
+
+        return datos
+    except IntegrityError:
+        return "Error"
+
+
+
+
 @app.route('/list')
 def list_songs():
     try:
         canciones = leer_todo(Cancion)
-    except:
+    except None:
         return "Error"
-    dict_songs = {}
-    dict_songs = listar_canciones(dict_songs, canciones)
-    print(dict_songs)
+    dict_songs = listar_canciones({}, canciones)
     return jsonify(dict_songs)
 
 
 @app.route('/list_lists')
 def list_lists():
-    listas = leer_todo(Lista)
-    dict_listas = {}
-    for element in listas:
-        dict_listas[element.id] = {}
-        dict_listas[element.id]["ID"] = element.id
-        dict_listas[element.id]["Nombre"] = element.nombre
-        dict_listas[element.id]["Desc"] = element.descripcion
-        if not element.canciones:
-            dict_listas[element.id]["Imagen"] = "default"
-        else:
-            dict_listas[element.id]["Imagen"] = element.canciones[0].album.foto
-
+    try:
+        listas = leer_todo(Lista)
+    except None:
+        return "Error"
+    dict_listas = listar_listas({}, listas)
     return jsonify(dict_listas)
 
 
@@ -167,16 +236,48 @@ def delete_from_list():
 
 @app.route('/search_song')
 def search_song():
-    if request.method == "POST":
-        data = request.get_json()
-        nombre = data["Nombre"]
+    canciones = buscar(request, Cancion, "nombre")
+    return jsonify(listar_canciones({}, canciones))
 
-    else:
-        nombre = request.args["Nombre"]
 
-    canciones = db.session.query(Cancion).filter_by(nombre=nombre).all()
+@app.route('/search_list')
+def search_list():
+    listas = buscar(request, Lista, "nombre")
+    return jsonify(listar_listas({}, listas))
 
-    return listar_canciones({}, canciones)
+
+@app.route('/search_song_by_album')
+def search_song_by_album():
+    canciones = buscar(request, Cancion, "album")
+    result = listar_canciones({}, canciones)
+    return jsonify(result)
+
+
+@app.route('/search_song_by_artist')
+def search_song_by_artist():
+    canciones = buscar(request, Artista, "artista")
+    result = listar_canciones({}, canciones)
+    return jsonify(result)
+
+
+@app.route('/search_song_list')
+def search_song_list():
+    canciones = buscar_lista(request, "cancion")
+    return jsonify(listar_canciones({}, canciones))
+
+
+@app.route('/search_song_by_album_list')
+def search_song_by_album_list():
+    canciones = buscar_lista(request, "album")
+    result = listar_canciones({}, canciones)
+    return jsonify(result)
+
+
+@app.route('/search_song_by_artist_list')
+def search_song_by_artist_list():
+    canciones = buscar_lista(request, "artista")
+    result = listar_canciones({}, canciones)
+    return jsonify(result)
 
 
 @app.route('/test')
@@ -226,7 +327,6 @@ def registro():
 
 @app.route('/delete_user')
 def delete_user():
-
     if request.method == 'POST':
         data = request.get_json()
         email = data["email"]

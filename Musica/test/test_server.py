@@ -26,7 +26,6 @@ def is_json(myjson):
 
 
 def insertar_cancion(nombre_cancion, nombre_album):
-
     cancion = Cancion(nombre=nombre_cancion, path="url", duracion=123, nombre_album=nombre_album)
 
     db.session.add(cancion)
@@ -56,10 +55,6 @@ def insertar_cancion_album(nombre_cancion, nombre_album):
 
 
 def insert_lista_test():
-    lista = db.session.query(Lista).filter_by(nombre="TEST_LIST").all()
-    if lista:
-        delete_lista_test(lista[0])
-
     lista = Lista(nombre="TEST_LIST", descripcion="TEST_DESC")
     db.session.add(lista)
     db.session.commit()
@@ -95,7 +90,12 @@ def comprobar_json(obj, status, res, res_esperado):
 
     obj.assertEqual(data, res_esperado)
 
-    print(data)
+
+def get_single_song_esperado(cancion):
+    return {str(cancion.id): {"ID": cancion.id, "Nombre": cancion.nombre,
+                              "Artistas": [artista.nombre for artista in cancion.artistas],
+                              "URL": cancion.path, "Imagen": cancion.album.foto,
+                              "Album": cancion.nombre_album}}
 
 
 class MyTestCase(unittest.TestCase):
@@ -111,11 +111,7 @@ class MyTestCase(unittest.TestCase):
 
         status, res = curl('http://localhost:5000/list')
 
-        res_esperado = {str(cancion.id): {"ID": cancion.id, "Nombre": cancion.nombre, "Artistas": cancion.artistas,
-                                          "URL": cancion.path, "Imagen": cancion.album.foto,
-                                          "Album": cancion.nombre_album}}
-
-        comprobar_json(self, status, res, res_esperado)
+        comprobar_json(self, status, res, get_single_song_esperado(cancion))
 
         delete_cancion_album(cancion, album)
 
@@ -179,14 +175,104 @@ class MyTestCase(unittest.TestCase):
                                           "URL": cancion.path, "Imagen": cancion.album.foto,
                                           "Album": cancion.nombre_album},
                         str(cancion2.id): {"ID": cancion2.id, "Nombre": cancion2.nombre, "Artistas": cancion2.artistas,
-                                          "URL": cancion2.path, "Imagen": cancion2.album.foto,
-                                          "Album": cancion2.nombre_album}
+                                           "URL": cancion2.path, "Imagen": cancion2.album.foto,
+                                           "Album": cancion2.nombre_album}
                         }
 
         comprobar_json(self, status, res, res_esperado)
 
         delete_cancion(cancion2)
         delete_cancion_album(cancion, album)
+
+    def test_search_list(self):
+        lista = insert_lista_test()
+        lista2 = insert_lista_test()
+        status, res = curl('http://localhost:5000/search_list?Nombre=%s' % lista.nombre)
+
+        res_esperado = {str(lista.id): {"ID": lista.id, "Nombre": lista.nombre, "Imagen": "default",
+                                        "Desc": lista.descripcion},
+                        str(lista2.id): {"ID": lista2.id, "Nombre": lista2.nombre, "Imagen": "default",
+                                         "Desc": lista2.descripcion}}
+
+        comprobar_json(self, status, res, res_esperado)
+
+        delete_lista_test(lista)
+        delete_lista_test(lista2)
+
+    def test_search_song_by_album(self):
+        cancion, album = insertar_cancion_album("Song1", "Album1")
+        status, res = curl('http://localhost:5000/search_song_by_album?Nombre=%s' % album.nombre)
+
+        comprobar_json(self, status, res, get_single_song_esperado(cancion))
+
+        delete_cancion_album(cancion, album)
+
+    def test_search_song_by_artist(self):
+        cancion, album = insertar_cancion_album("Song1", "Album1")
+        artista = Artista(nombre="Artista1", fecha_nacimiento="24-06-1999", pais="España",
+                          alias="Perico")
+        artista.composiciones.append(cancion)
+        db.session.add(artista)
+        db.session.commit()
+
+        status, res = curl('http://localhost:5000/search_song_by_artist?Nombre=%s' % artista.nombre)
+
+        comprobar_json(self, status, res, get_single_song_esperado(cancion))
+
+        db.session.delete(artista)
+        delete_cancion_album(cancion, album)
+
+    def test_search_song_on_list(self):
+        cancion, album = insertar_cancion_album("Song1", "Album1")
+        lista = insert_lista_test()
+
+        lista.canciones.append(cancion)
+        db.session.add(lista)
+        db.session.commit()
+
+        status, res = curl('http://localhost:5000/search_song_list?Nombre=%s&Lista=%s' % (cancion.nombre, lista.id))
+
+        comprobar_json(self, status, res, get_single_song_esperado(cancion))
+
+        delete_lista_test(lista)
+        delete_cancion_album(cancion, album)
+
+    def test_search_song_by_album_on_list(self):
+        cancion, album = insertar_cancion_album("Song1", "Album1")
+        lista = insert_lista_test()
+
+        lista.canciones.append(cancion)
+        db.session.add(lista)
+        db.session.commit()
+
+        status, res = curl('http://localhost:5000/search_song_by_album_list?Nombre=%s&Lista=%s'
+                           % (album.nombre, lista.id))
+
+        comprobar_json(self, status, res, get_single_song_esperado(cancion))
+
+        delete_lista_test(lista)
+        delete_cancion_album(cancion, album)
+
+    def test_search_song_by_artist_on_list(self):
+        cancion, album = insertar_cancion_album("Song1", "Album1")
+        artista = Artista(nombre="Artista1", fecha_nacimiento="24-06-1999", pais="España",
+                          alias="Perico")
+        artista.composiciones.append(cancion)
+        lista = insert_lista_test()
+        lista.canciones.append(cancion)
+        db.session.add(artista)
+        db.session.add(lista)
+        db.session.commit()
+
+        status, res = curl('http://localhost:5000/search_song_by_artist_list?Nombre=%s&Lista=%s'
+                           % (artista.nombre, lista.id))
+
+        comprobar_json(self, status, res, get_single_song_esperado(cancion))
+
+        db.session.delete(artista)
+        delete_lista_test(lista)
+        delete_cancion_album(cancion, album)
+
 
     # Test complementarios a implementar:
     #   Crear una lista de reproduccion - Done
@@ -199,5 +285,6 @@ class MyTestCase(unittest.TestCase):
 
 
 if __name__ == '__main__':
-
+    db.drop_all()
+    db.create_all()
     unittest.main()
