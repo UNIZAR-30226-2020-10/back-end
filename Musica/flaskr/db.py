@@ -1,20 +1,28 @@
+import os
+
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
 
 from flaskr import create_app
 
-# Configuracion PostgreSQL
-
-POSTGRES_URL = "127.0.0.1:5432"
-POSTGRES_USER = "admin"
-POSTGRES_PW = "admin"
-POSTGRES_DB = "test"
-
 app = create_app()
 
-app.config['SQLALCHEMY_DATABASE_URI'] = \
-    'postgresql+psycopg2://{user}:{pw}@{url}/{db}'. \
-        format(user=POSTGRES_USER, pw=POSTGRES_PW, url=POSTGRES_URL, db=POSTGRES_DB)
+# Configuracion PostgreSQL
+
+env = os.environ['FLASK_ENV']
+
+if env == 'development':
+    POSTGRES_URL = os.environ['DATABASE_URL']
+    app.config['SQLALCHEMY_DATABASE_URI'] = POSTGRES_URL
+
+else:
+    POSTGRES_URL = "127.0.0.1:5432"
+    POSTGRES_USER = "admin"
+    POSTGRES_PW = "admin"
+    POSTGRES_DB = "test"
+    app.config['SQLALCHEMY_DATABASE_URI'] = \
+        'postgresql+psycopg2://{user}:{pw}@{url}/{db}'. \
+            format(user=POSTGRES_USER, pw=POSTGRES_PW, url=POSTGRES_URL, db=POSTGRES_DB)
 
 db = SQLAlchemy(app)
 
