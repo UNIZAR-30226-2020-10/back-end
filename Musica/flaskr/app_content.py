@@ -1,6 +1,6 @@
 from flask import *
 from psycopg2.errors import UniqueViolation, InvalidDatetimeFormat
-from sqlalchemy.exc import IntegrityError, DataError
+from sqlalchemy.exc import DataError
 
 from flaskr.db import *
 
@@ -9,7 +9,7 @@ from flaskr.db import *
 ## ORDENAR CANCIONES Y LISTAS
 ## AÑADIR / ELIMINAR / MODIFICAR CATEGORIAS
 
-@app.route('/')
+@app.route('/', methods=['POST', 'GET'])
 def index():
     return render_template("index.html")
 
