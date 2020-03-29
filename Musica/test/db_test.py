@@ -9,7 +9,7 @@ def poblar():
     ]
 
     artistas = [
-        Artista(nombre='Juan', fecha_nacimiento=datetime.datetime(1990, 1, 2)),
+        Artista(nombre='Alan Walker', fecha_nacimiento=datetime.datetime(1990, 1, 2)),
         Artista(nombre='Paco', fecha_nacimiento=datetime.datetime(1991, 5, 1))
     ]
 
@@ -46,8 +46,8 @@ def poblar():
     ]
 
     canciones = [
-        Cancion(path='/home/alberto/canciones', nombre='Hello world', duracion=120),
-        Cancion(path='/home/juan/canciones', nombre='Foo', duracion=180)
+        Cancion(path='https://psoftware.s3.amazonaws.com/alan_walker-fade.mp3', nombre='Fade', duracion=120),
+        Cancion(path='https://psoftware.s3.amazonaws.com/alan_walker-spectre.mp3', nombre='Spectre', duracion=180)
     ]
 
     db.session.add_all(categorias)
