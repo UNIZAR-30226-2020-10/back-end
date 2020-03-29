@@ -1,0 +1,24 @@
+# Use postgres/example as user/password credentials
+version: '3.1'
+services:
+
+  flask:
+    build: .
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+
+  db:
+    image: postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: test
+    ports:
+      - 5432:5432
+    volumes:
+      - "../datatest:/var/lib/postgresql/data"
+
+
+
