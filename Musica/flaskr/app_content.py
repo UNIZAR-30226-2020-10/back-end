@@ -161,7 +161,7 @@ def list_data():
     if data_list == "Error":
         return "Error"
 
-    dict_lista = [listar_datos_lista(data_list, True)]
+    dict_lista = listar_datos_lista(data_list, True)
     return jsonify(dict_lista)
 
 
