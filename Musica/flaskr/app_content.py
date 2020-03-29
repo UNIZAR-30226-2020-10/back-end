@@ -131,7 +131,7 @@ def buscar_lista(req, tipo):
 def list_songs():
     try:
         canciones = leer_todo(Cancion)
-    except None:
+    except IntegrityError:
         db.session.rollback()
         return "Error"
     dict_songs = listar_canciones(canciones)
@@ -142,7 +142,7 @@ def list_songs():
 def list_lists():
     try:
         listas = leer_todo(Lista)
-    except None:
+    except IntegrityError:
         db.session.rollback()
         return "Error"
     dict_listas = listar_listas(listas)
