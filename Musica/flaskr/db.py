@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.exc import IntegrityError
 
 from flaskr import create_app
 
@@ -156,8 +157,9 @@ def leer_todo(tabla):
 
 
 def fetch_data_by_id(table, clave):
-    data = db.session.query(table).filter_by(id=clave).all()
-    if len(data) == 1:
-        return data[0]
-    else:
+    try:
+        data = db.session.query(table).filter_by(id=clave).first()
+        return data
+    except IntegrityError:
+        db.session.rollback()
         return "error"

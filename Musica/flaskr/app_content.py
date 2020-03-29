@@ -15,24 +15,22 @@ def index():
 
 
 def listar_canciones(canciones):
-    dictionary = {}
+    lista = []
     for song in canciones:
-        dictionary[song.id] = {}
-        dictionary[song.id]["ID"] = song.id
-        dictionary[song.id]["Nombre"] = song.nombre
-        dictionary[song.id]["Artistas"] = []
+        dictionary = {"ID": song.id, "Nombre": song.nombre, "Artistas": []}
         for artist in song.artistas:
-            dictionary[song.id]["Artistas"].append(artist.nombre)
-        dictionary[song.id]["Album"] = song.nombre_album
-        dictionary[song.id]["Imagen"] = song.album.foto
-        dictionary[song.id]["URL"] = song.path
-    return dictionary
+            dictionary["Artistas"].append(artist.nombre)
+        dictionary["Album"] = song.nombre_album
+        dictionary["Imagen"] = song.album.foto
+        dictionary["URL"] = song.path
+        lista.append(dictionary)
+    return lista
 
 
 def listar_listas(listas):
-    dictionary = {}
+    dictionary = []
     for element in listas:
-        dictionary[element.id] = listar_datos_lista(element, False)
+        dictionary.append(listar_datos_lista(element, False))
 
     return dictionary
 
@@ -129,23 +127,23 @@ def buscar_lista(req, tipo):
         return "Error"
 
 
-
-
-@app.route('/list')
+@app.route('/list', methods=['POST', 'GET'])
 def list_songs():
     try:
         canciones = leer_todo(Cancion)
     except None:
+        db.session.rollback()
         return "Error"
     dict_songs = listar_canciones(canciones)
     return jsonify(dict_songs)
 
 
-@app.route('/list_lists')
+@app.route('/list_lists', methods=['POST', 'GET'])
 def list_lists():
     try:
         listas = leer_todo(Lista)
     except None:
+        db.session.rollback()
         return "Error"
     dict_listas = listar_listas(listas)
     return jsonify(dict_listas)
@@ -163,11 +161,11 @@ def list_data():
     if data_list == "Error":
         return "Error"
 
-    dict_lista = {data_list.id: listar_datos_lista(data_list, True)}
+    dict_lista = [listar_datos_lista(data_list, True)]
     return jsonify(dict_lista)
 
 
-@app.route('/create_list')
+@app.route('/create_list', methods=['POST', 'GET'])
 def crear_lista():
     if request.method == "POST":
         data = request.get_json()
@@ -196,8 +194,8 @@ def delete_lista():
         lista = request.args['list']
 
     try:
-        element = db.session.query(Lista).filter_by(id=lista).all()
-        db.session.delete(element[0])
+        element = db.session.query(Lista).filter_by(id=lista).first()
+        db.session.delete(element)
         db.session.commit()
     except IntegrityError:
         db.session.rollback()
@@ -206,7 +204,7 @@ def delete_lista():
         return "Success"
 
 
-@app.route('/add_to_list')
+@app.route('/add_to_list', methods=['POST', 'GET'])
 def add_to_list():
     data_cancion, data_list = obtain_song_list(request)
 
@@ -220,7 +218,7 @@ def add_to_list():
         return "Success"
 
 
-@app.route('/delete_from_list')
+@app.route('/delete_from_list', methods=['POST', 'GET'])
 def delete_from_list():
     data_cancion, data_list = obtain_song_list(request)
 
@@ -234,53 +232,53 @@ def delete_from_list():
         return "Success"
 
 
-@app.route('/search_song')
+@app.route('/search_song', methods=['POST', 'GET'])
 def search_song():
     canciones = buscar(request, Cancion, "nombre")
     return jsonify(listar_canciones(canciones))
 
 
-@app.route('/search_list')
+@app.route('/search_list', methods=['POST', 'GET'])
 def search_list():
     listas = buscar(request, Lista, "nombre")
     return jsonify(listar_listas(listas))
 
 
-@app.route('/search_song_by_album')
+@app.route('/search_song_by_album', methods=['POST', 'GET'])
 def search_song_by_album():
     canciones = buscar(request, Cancion, "album")
     result = listar_canciones(canciones)
     return jsonify(result)
 
 
-@app.route('/search_song_by_artist')
+@app.route('/search_song_by_artist', methods=['POST', 'GET'])
 def search_song_by_artist():
     canciones = buscar(request, Artista, "artista")
     result = listar_canciones(canciones)
     return jsonify(result)
 
 
-@app.route('/search_song_list')
+@app.route('/search_song_list', methods=['POST', 'GET'])
 def search_song_list():
     canciones = buscar_lista(request, "cancion")
     return jsonify(listar_canciones(canciones))
 
 
-@app.route('/search_song_by_album_list')
+@app.route('/search_song_by_album_list', methods=['POST', 'GET'])
 def search_song_by_album_list():
     canciones = buscar_lista(request, "album")
     result = listar_canciones(canciones)
     return jsonify(result)
 
 
-@app.route('/search_song_by_artist_list')
+@app.route('/search_song_by_artist_list', methods=['POST', 'GET'])
 def search_song_by_artist_list():
     canciones = buscar_lista(request, "artista")
     result = listar_canciones(canciones)
     return jsonify(result)
 
 
-@app.route('/test')
+@app.route('/test', methods=['POST', 'GET'])
 def test():
     if request.method == "GET":
         res = request.args['test']
@@ -288,7 +286,28 @@ def test():
         return res
 
 
-@app.route('/register')
+def autentificacion(req):
+    if req.method == 'POST':
+        data = req.get_json()
+        email = data["email"]
+        password = data["password"]
+    else:
+        email = req.args["email"]
+        password = req.args["password"]
+
+    try:
+        user = db.session.query(Usuario).filter_by(email=email).first()
+    except IntegrityError:
+        db.session.rollback()
+        return False, "Error", None
+
+    if not user:
+        return False, "No user", None
+
+    return user.password == password, "Contraseña incorrecta", user
+
+
+@app.route('/register', methods=['POST', 'GET'])
 def registro():
     if request.method == 'POST':
         data = request.get_json()
@@ -311,42 +330,46 @@ def registro():
         db.session.add(user)
         db.session.commit()
     except IntegrityError as e:
-
+        db.session.rollback()
         if isinstance(e.orig, UniqueViolation):
             return "Clave duplicada"
         else:
             return "Error"
 
     except DataError as e:
-
+        db.session.rollback()
         if isinstance(e.orig, InvalidDatetimeFormat):
             return "Fecha incorrecta"
 
     return "Success"
 
 
-@app.route('/delete_user')
+@app.route('/delete_user', methods=['POST', 'GET'])
 def delete_user():
-    if request.method == 'POST':
-        data = request.get_json()
-        email = data["email"]
-        password = data["password"]
-    else:
-        email = request.args["email"]
-        password = request.args["password"]
+    entro, msg, user = autentificacion(request)
 
-    user = db.session.query(Usuario).filter_by(email=email).all()
-
-    if not user:
-        return "No user"
-
-    user = user[0]
-    if user.password == password:
+    if entro:
         try:
             db.session.delete(user)
             db.session.commit()
+
+            return "Success"
         except IntegrityError:
             db.session.rollback()
             return "Error"
+    else:
+        return msg
 
-    return "Success"
+
+@app.route('/sign_in', methods=['POST', 'GET'])
+def inicio_sesion():
+    entro, msg, user = autentificacion(request)
+
+    if entro:
+        try:
+            return "Success"
+        except IntegrityError:
+            db.session.rollback()
+            return "Error"
+    else:
+        return msg

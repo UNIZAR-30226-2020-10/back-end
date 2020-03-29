@@ -92,10 +92,10 @@ def comprobar_json(obj, status, res, res_esperado):
 
 
 def get_single_song_esperado(cancion):
-    return {str(cancion.id): {"ID": cancion.id, "Nombre": cancion.nombre,
-                              "Artistas": [artista.nombre for artista in cancion.artistas],
-                              "URL": cancion.path, "Imagen": cancion.album.foto,
-                              "Album": cancion.nombre_album}}
+    return [{"ID": cancion.id, "Nombre": cancion.nombre,
+             "Artistas": [artista.nombre for artista in cancion.artistas],
+             "URL": cancion.path, "Imagen": cancion.album.foto,
+             "Album": cancion.nombre_album}]
 
 
 class MyTestCase(unittest.TestCase):
@@ -124,8 +124,8 @@ class MyTestCase(unittest.TestCase):
         correcto, data = is_json(res)
         self.assertEqual(correcto, True, "El contenido devuelto no tiene el formato correcto")
 
-        res_esperado = {str(lista.id): {"ID": lista.id, "Nombre": lista.nombre, "Imagen": "default",
-                                        "Desc": lista.descripcion}}
+        res_esperado = [{"ID": lista.id, "Nombre": lista.nombre, "Imagen": "default",
+                         "Desc": lista.descripcion}]
         self.assertEqual(data, res_esperado)
 
         delete_lista_test(lista)
@@ -139,9 +139,9 @@ class MyTestCase(unittest.TestCase):
 
         status, res = curl('http://localhost:5000/list_data?list=%s' % lista.id)
 
-        res_esperado = {str(lista.id): {"ID": lista.id, "Nombre": lista.nombre, "Imagen": lista.canciones[0].album.foto,
-                                        "Desc": lista.descripcion,
-                                        "Canciones": get_single_song_esperado(cancion)}}
+        res_esperado = [{"ID": lista.id, "Nombre": lista.nombre, "Imagen": lista.canciones[0].album.foto,
+                         "Desc": lista.descripcion,
+                         "Canciones": get_single_song_esperado(cancion)}]
         comprobar_json(self, status, res, res_esperado)
 
         delete_lista_test(lista)
@@ -188,13 +188,12 @@ class MyTestCase(unittest.TestCase):
         cancion2 = insertar_cancion(cancion.nombre, album.nombre)
         status, res = curl('http://localhost:5000/search_song?Nombre=%s' % cancion.nombre)
 
-        res_esperado = {str(cancion.id): {"ID": cancion.id, "Nombre": cancion.nombre, "Artistas": cancion.artistas,
-                                          "URL": cancion.path, "Imagen": cancion.album.foto,
-                                          "Album": cancion.nombre_album},
-                        str(cancion2.id): {"ID": cancion2.id, "Nombre": cancion2.nombre, "Artistas": cancion2.artistas,
-                                           "URL": cancion2.path, "Imagen": cancion2.album.foto,
-                                           "Album": cancion2.nombre_album}
-                        }
+        res_esperado = [{"ID": cancion.id, "Nombre": cancion.nombre, "Artistas": cancion.artistas,
+                         "URL": cancion.path, "Imagen": cancion.album.foto,
+                         "Album": cancion.nombre_album},
+                        {"ID": cancion2.id, "Nombre": cancion2.nombre, "Artistas": cancion2.artistas,
+                         "URL": cancion2.path, "Imagen": cancion2.album.foto,
+                         "Album": cancion2.nombre_album}]
 
         comprobar_json(self, status, res, res_esperado)
 
@@ -206,10 +205,10 @@ class MyTestCase(unittest.TestCase):
         lista2 = insert_lista_test()
         status, res = curl('http://localhost:5000/search_list?Nombre=%s' % lista.nombre)
 
-        res_esperado = {str(lista.id): {"ID": lista.id, "Nombre": lista.nombre, "Imagen": "default",
-                                        "Desc": lista.descripcion},
-                        str(lista2.id): {"ID": lista2.id, "Nombre": lista2.nombre, "Imagen": "default",
-                                         "Desc": lista2.descripcion}}
+        res_esperado = [{"ID": lista.id, "Nombre": lista.nombre, "Imagen": "default",
+                         "Desc": lista.descripcion},
+                        {"ID": lista2.id, "Nombre": lista2.nombre, "Imagen": "default",
+                         "Desc": lista2.descripcion}]
 
         comprobar_json(self, status, res, res_esperado)
 
