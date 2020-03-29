@@ -1,6 +1,6 @@
 from flask import *
 from psycopg2.errors import UniqueViolation, InvalidDatetimeFormat
-from sqlalchemy.exc import DataError
+from sqlalchemy.exc import DataError, OperationalError
 
 from flaskr.db import *
 
@@ -90,7 +90,7 @@ def buscar_sub(donde, que, dato):
             artista = db.session.query(donde).filter_by(nombre=dato).all()
             datos = artista[0].composiciones
 
-    except IntegrityError:
+    except (IntegrityError, OperationalError):
         return "Error"
 
     return datos
@@ -123,7 +123,7 @@ def buscar_lista(req, tipo):
             return "Error"
 
         return datos
-    except IntegrityError:
+    except (IntegrityError, OperationalError):
         return "Error"
 
 
@@ -131,7 +131,7 @@ def buscar_lista(req, tipo):
 def list_songs():
     try:
         canciones = leer_todo(Cancion)
-    except IntegrityError:
+    except (IntegrityError, OperationalError):
         db.session.rollback()
         return "Error"
     dict_songs = listar_canciones(canciones)
@@ -142,7 +142,7 @@ def list_songs():
 def list_lists():
     try:
         listas = leer_todo(Lista)
-    except IntegrityError:
+    except (IntegrityError, OperationalError):
         db.session.rollback()
         return "Error"
     dict_listas = listar_listas(listas)
@@ -179,7 +179,7 @@ def crear_lista():
         element = Lista(nombre=lista, descripcion=desc)
         db.session.add(element)
         db.session.commit()
-    except IntegrityError:
+    except (IntegrityError, OperationalError):
         return "Error"
     else:
         return "Success"
@@ -197,7 +197,7 @@ def delete_lista():
         element = db.session.query(Lista).filter_by(id=lista).first()
         db.session.delete(element)
         db.session.commit()
-    except IntegrityError:
+    except (IntegrityError, OperationalError):
         db.session.rollback()
         return "Error"
     else:
@@ -211,7 +211,7 @@ def add_to_list():
     try:
         data_list.canciones.append(data_cancion)
         db.session.commit()
-    except IntegrityError:
+    except (IntegrityError, OperationalError):
         db.session.rollback()
         return "Error"
     else:
@@ -225,7 +225,7 @@ def delete_from_list():
     try:
         data_list.canciones.remove(data_cancion)
         db.session.commit()
-    except IntegrityError:
+    except (IntegrityError, OperationalError):
         db.session.rollback()
         return "Error"
     else:
@@ -297,7 +297,7 @@ def autentificacion(req):
 
     try:
         user = db.session.query(Usuario).filter_by(email=email).first()
-    except IntegrityError:
+    except (IntegrityError, OperationalError):
         db.session.rollback()
         return False, "Error", None
 
@@ -329,7 +329,7 @@ def registro():
     try:
         db.session.add(user)
         db.session.commit()
-    except IntegrityError as e:
+    except (IntegrityError, OperationalError) as e:
         db.session.rollback()
         if isinstance(e.orig, UniqueViolation):
             return "Clave duplicada"
@@ -354,7 +354,7 @@ def delete_user():
             db.session.commit()
 
             return "Success"
-        except IntegrityError:
+        except (IntegrityError, OperationalError):
             db.session.rollback()
             return "Error"
     else:
@@ -368,7 +368,7 @@ def inicio_sesion():
     if entro:
         try:
             return "Success"
-        except IntegrityError:
+        except (IntegrityError, OperationalError):
             db.session.rollback()
             return "Error"
     else:
