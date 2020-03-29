@@ -11,7 +11,7 @@ app = create_app()
 
 env = os.environ['FLASK_ENV']
 
-if env == 'development':
+if env == 'production':
     POSTGRES_URL = os.environ['DATABASE_URL']
     app.config['SQLALCHEMY_DATABASE_URI'] = POSTGRES_URL
 

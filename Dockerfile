@@ -15,6 +15,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY Musica/flaskr ./flaskr
 COPY Musica/test ./test
 
+ENV FLASK_ENV=production
 WORKDIR flaskr
 
 CMD [ "flask", "run" ]
