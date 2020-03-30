@@ -58,13 +58,17 @@ def obtain_song_list(request):
 
     data_list = fetch_data_by_id(Lista, lista)
     if data_list == "error":
-        return "Error_lista"
+        return None, None, "Error_lista"
+    elif data_list is None:
+        return None, None, "No existe la lista"
 
     data_cancion = fetch_data_by_id(Cancion, cancion)
     if data_cancion == "error":
-        return "Error_cancion"
+        return None, None, "Error_cancion"
+    elif data_cancion is None:
+        return None, None, "No existe la cancion"
 
-    return data_cancion, data_list
+    return data_cancion, data_list, "Success"
 
 
 def buscar(req, donde, que):
@@ -108,9 +112,10 @@ def buscar_lista(req, tipo):
 
     try:
         lista = fetch_data_by_id(Lista, int(lista))
-
         if lista == "error":
             return "Error"
+        elif lista is None:
+            return "No existe la lista"
 
         if tipo == "cancion":
             datos = [cancion for cancion in lista.canciones if cancion.nombre == dato]
@@ -160,6 +165,8 @@ def list_data():
     data_list = fetch_data_by_id(Lista, lista)
     if data_list == "Error":
         return "Error"
+    elif data_list is None:
+        return "No existe la lista"
 
     dict_lista = listar_datos_lista(data_list, True)
     return jsonify(dict_lista)
@@ -206,30 +213,34 @@ def delete_lista():
 
 @app.route('/add_to_list', methods=['POST', 'GET'])
 def add_to_list():
-    data_cancion, data_list = obtain_song_list(request)
-
-    try:
-        data_list.canciones.append(data_cancion)
-        db.session.commit()
-    except (IntegrityError, OperationalError):
-        db.session.rollback()
-        return "Error"
+    data_cancion, data_list, msg = obtain_song_list(request)
+    if data_cancion is not None and data_list is not None:
+        try:
+            data_list.canciones.append(data_cancion)
+            db.session.commit()
+        except (IntegrityError, OperationalError):
+            db.session.rollback()
+            return "Error"
+        else:
+            return msg
     else:
-        return "Success"
+        return msg
 
 
 @app.route('/delete_from_list', methods=['POST', 'GET'])
 def delete_from_list():
-    data_cancion, data_list = obtain_song_list(request)
-
-    try:
-        data_list.canciones.remove(data_cancion)
-        db.session.commit()
-    except (IntegrityError, OperationalError):
-        db.session.rollback()
-        return "Error"
+    data_cancion, data_list, msg = obtain_song_list(request)
+    if data_cancion is not None and data_list is not None:
+        try:
+            data_list.canciones.remove(data_cancion)
+            db.session.commit()
+        except (IntegrityError, OperationalError):
+            db.session.rollback()
+            return "Error"
+        else:
+            return msg
     else:
-        return "Success"
+        return msg
 
 
 @app.route('/search_song', methods=['POST', 'GET'])
