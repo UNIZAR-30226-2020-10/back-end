@@ -16,7 +16,7 @@ if env == 'production':
     app.config['SQLALCHEMY_DATABASE_URI'] = POSTGRES_URL
 
 else:
-    POSTGRES_URL = "127.0.0.1:5432"
+    POSTGRES_URL = "db:5432"
     POSTGRES_USER = "admin"
     POSTGRES_PW = "admin"
     POSTGRES_DB = "test"
@@ -152,12 +152,15 @@ class CancionCompartida(db.Model):
 
 class Cancion(db.Model):
     id = db.Column(db.Integer, primary_key=True)  # Cambiar por clave compuesta
-    path = db.Column(db.String(50), nullable=False)
+    path = db.Column(db.String(150), nullable=False)
     nombre = db.Column(db.String(20), nullable=False)
     duracion = db.Column(db.Integer, nullable=False)  # Segundos
     nombre_album = db.Column(db.String(20), db.ForeignKey('album.nombre'))
     comparticiones = db.relationship('CancionCompartida', backref='cancion')  # Relacion 'compartida'
     reproducciones = db.relationship('Usuario', backref='ultima_cancion')  # Relacion 'ultima'
+
+
+db.create_all()
 
 
 def leer_todo(tabla):
