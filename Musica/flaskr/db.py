@@ -15,6 +15,14 @@ if env == 'production':
     POSTGRES_URL = os.environ['DATABASE_URL']
     app.config['SQLALCHEMY_DATABASE_URI'] = POSTGRES_URL
 
+elif env == 'development_wind':
+    POSTGRES_URL = "localhost:5432"
+    POSTGRES_USER = "admin"
+    POSTGRES_PW = "admin"
+    POSTGRES_DB = "test"
+    app.config['SQLALCHEMY_DATABASE_URI'] = \
+        'postgresql+psycopg2://{user}:{pw}@{url}/{db}'. \
+        format(user=POSTGRES_USER, pw=POSTGRES_PW, url=POSTGRES_URL, db=POSTGRES_DB)
 else:
     POSTGRES_URL = "db:5432"
     POSTGRES_USER = "admin"
@@ -22,7 +30,7 @@ else:
     POSTGRES_DB = "test"
     app.config['SQLALCHEMY_DATABASE_URI'] = \
         'postgresql+psycopg2://{user}:{pw}@{url}/{db}'. \
-            format(user=POSTGRES_USER, pw=POSTGRES_PW, url=POSTGRES_URL, db=POSTGRES_DB)
+        format(user=POSTGRES_USER, pw=POSTGRES_PW, url=POSTGRES_URL, db=POSTGRES_DB)
 
 db = SQLAlchemy(app)
 

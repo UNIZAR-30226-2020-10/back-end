@@ -39,7 +39,7 @@ def insertar_album(nombre_album):
     if album:
         delete_album(album[0])
 
-    album = Album(nombre=nombre_album, descripcion="Album1", fecha="20-12-1999", foto="Foto1")
+    album = Album(nombre=nombre_album, descripcion="Album1", fecha="1999-12-20", foto="Foto1")
 
     db.session.add(album)
     db.session.commit()
@@ -139,9 +139,9 @@ class MyTestCase(unittest.TestCase):
 
         status, res = curl('http://localhost:5000/list_data?list=%s' % lista.id)
 
-        res_esperado = [{"ID": lista.id, "Nombre": lista.nombre, "Imagen": lista.canciones[0].album.foto,
-                         "Desc": lista.descripcion,
-                         "Canciones": get_single_song_esperado(cancion)}]
+        res_esperado = {"ID": lista.id, "Nombre": lista.nombre, "Imagen": lista.canciones[0].album.foto,
+                        "Desc": lista.descripcion,
+                        "Canciones": get_single_song_esperado(cancion)}
         comprobar_json(self, status, res, res_esperado)
 
         delete_lista_test(lista)
@@ -225,7 +225,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_search_song_by_artist(self):
         cancion, album = insertar_cancion_album("Song1", "Album1")
-        artista = Artista(nombre="Artista1", fecha_nacimiento="24-06-1999", pais="España",
+        artista = Artista(nombre="Artista1", fecha_nacimiento="1999-06-24", pais="España",
                           alias="Perico")
         artista.composiciones.append(cancion)
         db.session.add(artista)
@@ -271,7 +271,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_search_song_by_artist_on_list(self):
         cancion, album = insertar_cancion_album("Song1", "Album1")
-        artista = Artista(nombre="Artista1", fecha_nacimiento="24-06-1999", pais="España",
+        artista = Artista(nombre="Artista1", fecha_nacimiento="1999-06-24", pais="España",
                           alias="Perico")
         artista.composiciones.append(cancion)
         lista = insert_lista_test()
