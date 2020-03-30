@@ -3,8 +3,7 @@ FROM python:3.7
 RUN apt-get update -y && \
     apt-get install -y libcurl4-openssl-dev \
     libssl-dev \
-    libpq-dev \
-    python3-flask
+    libpq-dev
 
 WORKDIR /usr/src/Musica
 
@@ -15,7 +14,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY Musica/flaskr ./flaskr
 COPY Musica/test ./test
 
-ENV FLASK_ENV=production
 WORKDIR flaskr
+ENV FLASK_ENV=production
+ENV PYTHONPATH=/usr/src/Musica
 
-CMD [ "flask", "run" ]
+CMD [ "python3", "app.py" ]
