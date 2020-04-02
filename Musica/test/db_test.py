@@ -130,3 +130,6 @@ def poblar():
     db.session.add_all(canciones_compartidas)
 
     db.session.commit()
+
+
+poblar()
