@@ -91,13 +91,18 @@ def buscar_sub(donde, que, dato):
         elif que == "album":
             datos = db.session.query(donde).filter_by(nombre_album=dato).all()
         elif que == "artista":
-            artista = db.session.query(donde).filter_by(nombre=dato).all()
-            datos = artista[0].composiciones
+            artista = db.session.query(donde).filter_by(nombre=dato).first()
+            datos = artista.composiciones
+        elif que == "categoria":
+            categoria = db.session.query(donde).filter_by(nombre=dato).first()
+            datos = categoria.canciones
 
     except (IntegrityError, OperationalError):
-        return "Error"
+        return "Error", False
+    except AttributeError:
+        return "No existe la " + que, False
 
-    return datos
+    return datos, True
 
 
 def buscar_lista(req, tipo):
@@ -113,9 +118,9 @@ def buscar_lista(req, tipo):
     try:
         lista = fetch_data_by_id(Lista, int(lista))
         if lista == "error":
-            return "Error"
+            return "Error", False
         elif lista is None:
-            return "No existe la lista"
+            return "No existe la lista", False
 
         if tipo == "cancion":
             datos = [cancion for cancion in lista.canciones if cancion.nombre == dato]
@@ -124,12 +129,17 @@ def buscar_lista(req, tipo):
         elif tipo == "artista":
             artista = db.session.query(Artista).filter_by(nombre=dato).all()
             datos = [cancion for cancion in artista[0].composiciones if cancion in lista.canciones]
+        elif tipo == "categoria":
+            categoria = db.session.query(Categoria).filter_by(nombre=dato).first()
+            datos = [cancion for cancion in categoria.canciones if cancion in lista.canciones]
         else:
-            return "Error"
+            return "Error", False
 
-        return datos
+        return datos, True
     except (IntegrityError, OperationalError):
-        return "Error"
+        return "Error", False
+    except AttributeError:
+        return "No existe la " + tipo, False
 
 
 @app.route('/list', methods=['POST', 'GET'])
@@ -245,48 +255,89 @@ def delete_from_list():
 
 @app.route('/search_song', methods=['POST', 'GET'])
 def search_song():
-    canciones = buscar(request, Cancion, "nombre")
-    return jsonify(listar_canciones(canciones))
+    canciones, exito = buscar(request, Cancion, "nombre")
+    if not exito:
+        return canciones
+    else:
+        return jsonify(listar_canciones(canciones))
 
 
 @app.route('/search_list', methods=['POST', 'GET'])
 def search_list():
-    listas = buscar(request, Lista, "nombre")
-    return jsonify(listar_listas(listas))
+    listas, exito = buscar(request, Lista, "nombre")
+    if not exito:
+        return listas
+    else:
+        return jsonify(listar_listas(listas))
 
 
 @app.route('/search_song_by_album', methods=['POST', 'GET'])
 def search_song_by_album():
-    canciones = buscar(request, Cancion, "album")
-    result = listar_canciones(canciones)
-    return jsonify(result)
+    canciones, exito = buscar(request, Cancion, "album")
+    if not exito:
+        return canciones
+    else:
+        result = listar_canciones(canciones)
+        return jsonify(result)
 
 
 @app.route('/search_song_by_artist', methods=['POST', 'GET'])
 def search_song_by_artist():
-    canciones = buscar(request, Artista, "artista")
-    result = listar_canciones(canciones)
-    return jsonify(result)
+    canciones, exito = buscar(request, Artista, "artista")
+    if not exito:
+        return canciones
+    else:
+        result = listar_canciones(canciones)
+        return jsonify(result)
 
 
 @app.route('/search_song_list', methods=['POST', 'GET'])
 def search_song_list():
-    canciones = buscar_lista(request, "cancion")
-    return jsonify(listar_canciones(canciones))
+    canciones, exito = buscar_lista(request, "cancion")
+    if not exito:
+        return canciones
+    else:
+        return jsonify(listar_canciones(canciones))
 
 
 @app.route('/search_song_by_album_list', methods=['POST', 'GET'])
 def search_song_by_album_list():
-    canciones = buscar_lista(request, "album")
-    result = listar_canciones(canciones)
-    return jsonify(result)
+    canciones, exito = buscar_lista(request, "album")
+    if not exito:
+        return canciones
+    else:
+        result = listar_canciones(canciones)
+        return jsonify(result)
 
 
 @app.route('/search_song_by_artist_list', methods=['POST', 'GET'])
 def search_song_by_artist_list():
-    canciones = buscar_lista(request, "artista")
-    result = listar_canciones(canciones)
-    return jsonify(result)
+    canciones, exito = buscar_lista(request, "artista")
+    if not exito:
+        return canciones
+    else:
+        result = listar_canciones(canciones)
+        return jsonify(result)
+
+
+@app.route('/filter_category', methods=['POST', 'GET'])
+def filter_category():
+    canciones, exito = buscar(request, Categoria, "categoria")
+    if not exito:
+        return canciones
+    else:
+        result = listar_canciones(canciones)
+        return jsonify(result)
+
+
+@app.route('/filter_category_in_list', methods=['POST', 'GET'])
+def filter_category_list():
+    canciones, exito = buscar_lista(request, "categoria")
+    if not exito:
+        return canciones
+    else:
+        result = listar_canciones(canciones)
+        return jsonify(result)
 
 
 @app.route('/test', methods=['POST', 'GET'])
