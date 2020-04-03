@@ -18,5 +18,4 @@ WORKDIR flaskr
 ENV FLASK_ENV=production
 ENV PYTHONPATH=/usr/src/Musica
 
-CMD [ "sleep", "5"]
-CMD [ "python3", "app.py"]
+CMD [ "python3", "app.py" ]
