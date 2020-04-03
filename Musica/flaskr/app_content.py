@@ -47,14 +47,14 @@ def listar_datos_lista(listas, canciones):
     return dictionary
 
 
-def obtain_song_list(request):
-    if request.method == "POST":
-        data = request.get_json()
+def obtain_song_list(req):
+    if req.method == "POST":
+        data = req.get_json()
         cancion = data['cancion']
         lista = data['list']
     else:
-        cancion = int(request.args['cancion'])
-        lista = int(request.args['list'])
+        cancion = int(req.args['cancion'])
+        lista = int(req.args['list'])
 
     data_list = fetch_data_by_id(Lista, lista)
     if data_list == "error":
@@ -148,6 +148,20 @@ def search_in_list(req):
     return datos, True
 
 
+def buscar_lista(req):
+    if req.method == "POST":
+        data = req.get_json()
+        lista = data["Lista"]
+
+    else:
+        lista = req.args["Lista"]
+
+    datos = db.session.query(Lista).filter(Lista.nombre.ilike('%' + lista + '%'))
+
+    return datos
+
+
+# ---------------------------------------------------------------------------------------------------
 @app.route('/search', methods=['POST', 'GET'])
 def buscar_general():
     res = search(request)
@@ -276,6 +290,13 @@ def delete_from_list():
         return msg
 
 
+@app.route('/search_list', methods=['POST', 'GET'])
+def search_list():
+    listas = buscar_lista(request)
+    result = listar_listas(listas)
+    return jsonify(result)
+
+
 @app.route('/filter_category', methods=['POST', 'GET'])
 def filter_category():
     canciones = buscar_categorias(request)
@@ -298,6 +319,7 @@ def test():
         return res
 
 
+# -----------------------------------------------------------------------------------------------------
 def autentificacion(req):
     if req.method == 'POST':
         data = req.get_json()
