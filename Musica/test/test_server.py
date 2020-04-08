@@ -20,7 +20,7 @@ def curl(url):
 def is_json(myjson):
     try:
         json_object = json.loads(myjson)
-    except ValueError as e:
+    except ValueError:
         return False, None
     return True, json_object
 

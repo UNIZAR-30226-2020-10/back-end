@@ -1,20 +1,45 @@
-from flask import *
+"""
+Autor: Saúl Flores Benavente
+Fecha-última_modificación: 08-04-2020
+Fichero que contiene la API de la aplicación TuneIT y sus funciones auxiliares
+"""
+
+from flask import request, jsonify, render_template
 from psycopg2.errors import UniqueViolation, InvalidDatetimeFormat
-from sqlalchemy.exc import DataError, OperationalError
+from sqlalchemy.exc import DataError, OperationalError, IntegrityError
+from flaskr.db import APP, fetch_data_by_id, Lista, Cancion, DB, Categoria, Artista, leer_todo, \
+    Usuario
 
-from flaskr.db import *
 
+# pylint: disable=no-member
+# BUSQUEDA DE CANCIONES Y LISTAS NOMBRE, ARTISTA, ALBUM / CATEGORIAS
+# ORDENAR CANCIONES Y LISTAS
+# AÑADIR / ELIMINAR / MODIFICAR CATEGORIAS
 
-## BUSQUEDA DE CANCIONES Y LISTAS NOMBRE, ARTISTA, ALBUM / CATEGORIAS
-## ORDENAR CANCIONES Y LISTAS
-## AÑADIR / ELIMINAR / MODIFICAR CATEGORIAS
-
-@app.route('/', methods=['POST', 'GET'])
+@APP.route('/', methods=['POST', 'GET'])
 def index():
-    return render_template("index.html")
+    """
+    Redirige a la pagina principal
+    Esto desaparecerá
+    :return:
+    """
+    return render_template("index2.html")
 
 
 def listar_canciones(canciones):
+    """
+    Formatea los datos de una lista de canciones para devolverlos como una lista de diccionarios
+    Auxiliar para transformar los datos en formato compatible con json
+    Los diccionarios contienen:
+        - ID
+        - Nombre
+        - Artistas
+        - Albúm
+        - Imagen
+        - URL de la cancion
+    :param canciones:
+    :return:
+    """
     lista = []
     for song in canciones:
         dictionary = {"ID": song.id, "Nombre": song.nombre, "Artistas": []}
@@ -28,6 +53,12 @@ def listar_canciones(canciones):
 
 
 def listar_listas(listas):
+    """
+    Formatea los datos de una lista de listas para devolverlos como una lista de diccionarios
+    Auxiliar para transformar los datos en formato compatible con json
+    :param listas:
+    :return:
+    """
     dictionary = []
     for element in listas:
         dictionary.append(listar_datos_lista(element, False))
@@ -36,6 +67,20 @@ def listar_listas(listas):
 
 
 def listar_datos_lista(listas, canciones):
+    """
+    Formatea una lista de reproducción como un diccionario que incluye las canciones que
+    pertenecen a esa lista
+    Auxiliar para transformar los datos en formato compatible con json
+    El diccionario contiene:
+        - ID
+        - Nombre
+        - Descripción
+        - Imagen
+        - Canciones, solo si <canciones> es True
+    :param listas:
+    :param canciones:
+    :return:
+    """
     dictionary = {"ID": listas.id, "Nombre": listas.nombre, "Desc": listas.descripcion}
     if canciones:
         dictionary["Canciones"] = listar_canciones(listas.canciones)
@@ -48,6 +93,12 @@ def listar_datos_lista(listas, canciones):
 
 
 def obtain_song_list(req):
+    """
+    Obtiene una cancion y una lista dadas en una petición
+    Devuelve error si no se pueden encontrar
+    :param req:
+    :return:
+    """
     if req.method == "POST":
         data = req.get_json()
         cancion = data['cancion']
@@ -59,19 +110,27 @@ def obtain_song_list(req):
     data_list = fetch_data_by_id(Lista, lista)
     if data_list == "error":
         return None, None, "Error_lista"
-    elif data_list is None:
+
+    if data_list is None:
         return None, None, "No existe la lista"
 
     data_cancion = fetch_data_by_id(Cancion, cancion)
     if data_cancion == "error":
         return None, None, "Error_cancion"
-    elif data_cancion is None:
+
+    if data_cancion is None:
         return None, None, "No existe la cancion"
 
     return data_cancion, data_list, "Success"
 
 
 def buscar_categorias(req):
+    """
+    Devuelve una lista con las canciones cuya categoria se encuentre en la lista de
+    categorias presente en la petición
+    :param req:
+    :return:
+    """
     if req.method == "POST":
         data = req.get_json()
         dato = data["Categorias"]
@@ -79,12 +138,18 @@ def buscar_categorias(req):
     else:
         dato = req.args["Categorias"].split(" ")
 
-    datos = db.session.query(Cancion).filter(Categoria.nombre.in_(dato), Categoria.canciones)
+    datos = DB.session.query(Cancion).filter(Categoria.nombre.in_(dato), Categoria.canciones)
 
     return datos
 
 
 def buscar_categorias_list(req):
+    """
+    Devuelve una lista con las canciones contenidas en la lista especificada cuya categoria se
+    encuentre en lalista de categorias presente en la petición
+    :param req:
+    :return:
+    """
     if req.method == "POST":
         data = req.get_json()
         dato = data["Categorias"]
@@ -97,10 +162,11 @@ def buscar_categorias_list(req):
     lista = fetch_data_by_id(Lista, int(lista))
     if lista == "error":
         return "Error", False
-    elif lista is None:
+
+    if lista is None:
         return "No existe la lista", False
 
-    datos = db.session.query(Cancion) \
+    datos = DB.session.query(Cancion) \
         .filter(Categoria.nombre.in_(dato), Categoria.canciones)
 
     datos = [cancion for cancion in datos if cancion in lista.canciones]
@@ -108,6 +174,12 @@ def buscar_categorias_list(req):
 
 
 def search(req):
+    """
+    Devuelve una lista de canciones cuyo nombre, autor o album se contengan la subcadena
+    presente en la petición
+    :param req:
+    :return:
+    """
     if req.method == "POST":
         data = req.get_json()
         dato = data["Nombre"]
@@ -115,9 +187,11 @@ def search(req):
     else:
         dato = req.args["Nombre"]
 
-    canciones = db.session.query(Cancion).filter(Cancion.nombre.ilike('%' + dato + '%'))
-    albumes = db.session.query(Cancion).filter(Cancion.nombre_album.ilike('%' + dato + '%'))
-    artista = db.session.query(Cancion).filter(Artista.nombre.ilike('%' + dato + '%'), Artista.composiciones)
+    canciones = DB.session.query(Cancion).filter(Cancion.nombre.ilike('%' + dato + '%'))
+    albumes = DB.session.query(Cancion).filter(Cancion.nombre_album.ilike('%' + dato + '%'))
+    artista = DB.session.query(Cancion).filter(
+        Artista.nombre.ilike('%' + dato + '%'), Artista.composiciones
+    )
 
     datos = canciones.union(albumes, artista)
 
@@ -125,6 +199,12 @@ def search(req):
 
 
 def search_in_list(req):
+    """
+    Devuelve una lista de canciones contenidas en la lista especificada cuyo nombre,
+    autor o album se contengan la subcadena presente en la petición
+    :param req:
+    :return:
+    """
     if req.method == "POST":
         data = req.get_json()
         dato = data["Nombre"]
@@ -137,10 +217,12 @@ def search_in_list(req):
     lista = fetch_data_by_id(Lista, int(lista))
     if lista == "error":
         return "Error", False
-    elif lista is None:
+
+    if lista is None:
         return "No existe la lista", False
 
-    artistas = db.session.query(Cancion).filter(Artista.nombre.ilike('%' + dato + '%'), Artista.composiciones).all()
+    artistas = DB.session.query(Cancion).filter(Artista.nombre.ilike('%' + dato + '%'),
+                                                Artista.composiciones).all()
 
     datos = [cancion for cancion in lista.canciones if
              (dato in cancion.nombre) or (dato in cancion.nombre_album) or (cancion in artistas)]
@@ -149,6 +231,11 @@ def search_in_list(req):
 
 
 def buscar_lista(req):
+    """
+    Devuelve una lista de listas que contiene todas las listas de reproducción
+    :param req:
+    :return:
+    """
     if req.method == "POST":
         data = req.get_json()
         lista = data["Lista"]
@@ -156,53 +243,75 @@ def buscar_lista(req):
     else:
         lista = req.args["Lista"]
 
-    datos = db.session.query(Lista).filter(Lista.nombre.ilike('%' + lista + '%'))
+    datos = DB.session.query(Lista).filter(Lista.nombre.ilike('%' + lista + '%'))
 
     return datos
 
 
-# ---------------------------------------------------------------------------------------------------
-@app.route('/search', methods=['POST', 'GET'])
+# -------------------------------------------------------------------------------------------------
+@APP.route('/search', methods=['POST', 'GET'])
 def buscar_general():
+    """
+    Devuelve en formato json los resultados de la busqueda de canciones por autor, artistas y albúm
+    :return:
+    """
     res = search(request)
     res = listar_canciones(res)
     return jsonify(res)
 
 
-@app.route('/search_in_list', methods=['POST', 'GET'])
+@APP.route('/search_in_list', methods=['POST', 'GET'])
 def buscar_general_lista():
+    """
+    Devuelve en formato json los resultados de la busqueda de canciones por autor, artistas y
+    albúm en una lista de reproducción específica
+    :return:
+    """
     res, exito = search_in_list(request)
     if not exito:
         return res
-    else:
-        res = listar_canciones(res)
-        return jsonify(res)
+
+    res = listar_canciones(res)
+    return jsonify(res)
 
 
-@app.route('/list', methods=['POST', 'GET'])
+@APP.route('/list', methods=['POST', 'GET'])
 def list_songs():
+    """
+    Lista en formato json las canciones presentes en la base de datos y su información básica
+    :return:
+    """
     try:
         canciones = leer_todo(Cancion)
     except (IntegrityError, OperationalError):
-        db.session.rollback()
+        DB.session.rollback()
         return "Error"
     dict_songs = listar_canciones(canciones)
     return jsonify(dict_songs)
 
 
-@app.route('/list_lists', methods=['POST', 'GET'])
+@APP.route('/list_lists', methods=['POST', 'GET'])
 def list_lists():
+    """
+    Lista en formato json las listas de reproducción y su información básica de la base de datos
+    :return:
+    """
     try:
         listas = leer_todo(Lista)
     except (IntegrityError, OperationalError):
-        db.session.rollback()
+        DB.session.rollback()
         return "Error"
     dict_listas = listar_listas(listas)
     return jsonify(dict_listas)
 
 
-@app.route('/list_data', methods=['POST', 'GET'])
+@APP.route('/list_data', methods=['POST', 'GET'])
 def list_data():
+    """
+    Lista en formato json la información de una lista de reproducción incluyendo las canciones
+    que la componen
+    :return:
+    """
     if request.method == "POST":
         data = request.get_json()
         lista = data['list']
@@ -212,15 +321,20 @@ def list_data():
     data_list = fetch_data_by_id(Lista, lista)
     if data_list == "Error":
         return "Error"
-    elif data_list is None:
+
+    if data_list is None:
         return "No existe la lista"
 
     dict_lista = listar_datos_lista(data_list, True)
     return jsonify(dict_lista)
 
 
-@app.route('/create_list', methods=['POST', 'GET'])
+@APP.route('/create_list', methods=['POST', 'GET'])
 def crear_lista():
+    """
+    Crea una lista de reproducción con la información proporcionada en la petición
+    :return:
+    """
     if request.method == "POST":
         data = request.get_json()
         lista = data['list']
@@ -231,16 +345,20 @@ def crear_lista():
 
     try:
         element = Lista(nombre=lista, descripcion=desc)
-        db.session.add(element)
-        db.session.commit()
+        DB.session.add(element)
+        DB.session.commit()
     except (IntegrityError, OperationalError):
         return "Error"
     else:
         return "Success"
 
 
-@app.route('/delete_list', methods=['POST', 'GET'])
+@APP.route('/delete_list', methods=['POST', 'GET'])
 def delete_lista():
+    """
+    Borra la lista de reproducción especificada
+    :return:
+    """
     if request.method == "POST":
         data = request.get_json()
         lista = data["list"]
@@ -248,25 +366,29 @@ def delete_lista():
         lista = request.args['list']
 
     try:
-        element = db.session.query(Lista).filter_by(id=lista).first()
-        db.session.delete(element)
-        db.session.commit()
+        element = DB.session.query(Lista).filter_by(id=lista).first()
+        DB.session.delete(element)
+        DB.session.commit()
     except (IntegrityError, OperationalError):
-        db.session.rollback()
+        DB.session.rollback()
         return "Error"
     else:
         return "Success"
 
 
-@app.route('/add_to_list', methods=['POST', 'GET'])
+@APP.route('/add_to_list', methods=['POST', 'GET'])
 def add_to_list():
+    """
+    Añade la canción especificada a la lista de reproducción especificada
+    :return:
+    """
     data_cancion, data_list, msg = obtain_song_list(request)
     if data_cancion is not None and data_list is not None:
         try:
             data_list.canciones.append(data_cancion)
-            db.session.commit()
+            DB.session.commit()
         except (IntegrityError, OperationalError):
-            db.session.rollback()
+            DB.session.rollback()
             return "Error"
         else:
             return msg
@@ -274,15 +396,19 @@ def add_to_list():
         return msg
 
 
-@app.route('/delete_from_list', methods=['POST', 'GET'])
+@APP.route('/delete_from_list', methods=['POST', 'GET'])
 def delete_from_list():
+    """
+    Borra la canción especificada de la lista de reproducción especificada
+    :return:
+    """
     data_cancion, data_list, msg = obtain_song_list(request)
     if data_cancion is not None and data_list is not None:
         try:
             data_list.canciones.remove(data_cancion)
-            db.session.commit()
+            DB.session.commit()
         except (IntegrityError, OperationalError):
-            db.session.rollback()
+            DB.session.rollback()
             return "Error"
         else:
             return msg
@@ -290,37 +416,61 @@ def delete_from_list():
         return msg
 
 
-@app.route('/search_list', methods=['POST', 'GET'])
+@APP.route('/search_list', methods=['POST', 'GET'])
 def search_list():
+    """
+    Busca una lista de reproducción en la base de datos
+    :return:
+    """
     listas = buscar_lista(request)
     result = listar_listas(listas)
     return jsonify(result)
 
 
-@app.route('/filter_category', methods=['POST', 'GET'])
+@APP.route('/filter_category', methods=['POST', 'GET'])
 def filter_category():
+    """
+    Devuelve una lista de canciones pertenecientes a las categorias en el filtro
+    :return:
+    """
     canciones = buscar_categorias(request)
     result = listar_canciones(canciones)
     return jsonify(result)
 
 
-@app.route('/filter_category_in_list', methods=['POST', 'GET'])
+@APP.route('/filter_category_in_list', methods=['POST', 'GET'])
 def filter_category_list():
+    """
+    Devuelve una lista de canciones pertenecientes a las categorias en el filtro y a la lista de
+    reproducción indicada
+    :return:
+    """
     canciones = buscar_categorias_list(request)
     result = listar_canciones(canciones)
     return jsonify(result)
 
 
-@app.route('/test', methods=['POST', 'GET'])
+@APP.route('/test', methods=['POST', 'GET'])
 def test():
+    """
+    Test para mostrar que el servidor responde peticiones
+    :return:
+    """
     if request.method == "GET":
         res = request.args['test']
 
         return res
 
+    return "Error"
 
-# -----------------------------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------------------------
 def autentificacion(req):
+    """
+    Comprueba que existe el usuario especificado y que los datos de inicio de sesión son correctos
+    :param req:
+    :return:
+    """
     if req.method == 'POST':
         data = req.get_json()
         email = data["email"]
@@ -330,9 +480,9 @@ def autentificacion(req):
         password = req.args["password"]
 
     try:
-        user = db.session.query(Usuario).filter_by(email=email).first()
+        user = DB.session.query(Usuario).filter_by(email=email).first()
     except (IntegrityError, OperationalError):
-        db.session.rollback()
+        DB.session.rollback()
         return False, "Error", None
 
     if not user:
@@ -341,8 +491,12 @@ def autentificacion(req):
     return user.password == password, "Contraseña incorrecta", user
 
 
-@app.route('/register', methods=['POST', 'GET'])
+@APP.route('/register', methods=['POST', 'GET'])
 def registro():
+    """
+    Registrar el usuario y sus datos en la base de datos
+    :return:
+    """
     if request.method == 'POST':
         data = request.get_json()
         email = data["email"]
@@ -361,49 +515,57 @@ def registro():
     user = Usuario(nombre=nombre, email=email, password=password, fecha_nacimiento=fecha, pais=pais)
 
     try:
-        db.session.add(user)
-        db.session.commit()
-    except (IntegrityError, OperationalError) as e:
-        db.session.rollback()
-        if isinstance(e.orig, UniqueViolation):
+        DB.session.add(user)
+        DB.session.commit()
+    except (IntegrityError, OperationalError) as error:
+        DB.session.rollback()
+        if isinstance(error.orig, UniqueViolation):
             return "Clave duplicada"
-        else:
-            return "Error"
 
-    except DataError as e:
-        db.session.rollback()
-        if isinstance(e.orig, InvalidDatetimeFormat):
+        return "Error"
+
+    except DataError as error:
+        DB.session.rollback()
+        if isinstance(error.orig, InvalidDatetimeFormat):
             return "Fecha incorrecta"
 
     return "Success"
 
 
-@app.route('/delete_user', methods=['POST', 'GET'])
+@APP.route('/delete_user', methods=['POST', 'GET'])
 def delete_user():
+    """
+    Eliminar el usuario especificado de la base de datos
+    :return:
+    """
     entro, msg, user = autentificacion(request)
 
     if entro:
         try:
-            db.session.delete(user)
-            db.session.commit()
+            DB.session.delete(user)
+            DB.session.commit()
 
             return "Success"
         except (IntegrityError, OperationalError):
-            db.session.rollback()
+            DB.session.rollback()
             return "Error"
     else:
         return msg
 
 
-@app.route('/sign_in', methods=['POST', 'GET'])
+@APP.route('/sign_in', methods=['POST', 'GET'])
 def inicio_sesion():
-    entro, msg, user = autentificacion(request)
+    """
+    Inicio de sesion
+    :return:
+    """
+    entro, msg, _ = autentificacion(request)
 
     if entro:
         try:
             return "Success"
         except (IntegrityError, OperationalError):
-            db.session.rollback()
+            DB.session.rollback()
             return "Error"
     else:
         return msg

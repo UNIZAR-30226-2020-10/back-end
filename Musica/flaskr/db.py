@@ -1,3 +1,11 @@
+"""
+Autor: Alberto Calvo Rubió
+Fecha-última_modificación: 08-04-2020
+Modulo principal de la aplicación
+"""
+
+# pylint: disable=no-member
+
 import os
 
 from flask_sqlalchemy import SQLAlchemy
@@ -5,180 +13,198 @@ from sqlalchemy.exc import IntegrityError
 
 from flaskr import create_app
 
-app = create_app()
+APP = create_app()
 
 # Configuracion PostgreSQL
 
-env = os.environ['FLASK_ENV']
+ENV = os.environ['FLASK_ENV']
 
-if env == 'production':
+if ENV == 'production':
     POSTGRES_URL = os.environ['DATABASE_URL']
-    app.config['SQLALCHEMY_DATABASE_URI'] = POSTGRES_URL
+    APP.config['SQLALCHEMY_DATABASE_URI'] = POSTGRES_URL
 
-elif env == 'development_wind':
+elif ENV == 'development_wind':
     POSTGRES_URL = "localhost:5432"
     POSTGRES_USER = "admin"
     POSTGRES_PW = "admin"
     POSTGRES_DB = "test"
-    app.config['SQLALCHEMY_DATABASE_URI'] = \
-        'postgresql+psycopg2://{user}:{pw}@{url}/{db}'. \
-        format(user=POSTGRES_USER, pw=POSTGRES_PW, url=POSTGRES_URL, db=POSTGRES_DB)
+    APP.config['SQLALCHEMY_DATABASE_URI'] = \
+        'postgresql+psycopg2://{user}:{pw}@{url}/{DB}'. \
+            format(user=POSTGRES_USER, pw=POSTGRES_PW, url=POSTGRES_URL, DB=POSTGRES_DB)
 else:
-    POSTGRES_URL = "db:5432"
+    POSTGRES_URL = "DB:5432"
     POSTGRES_USER = "admin"
     POSTGRES_PW = "admin"
     POSTGRES_DB = "test"
-    app.config['SQLALCHEMY_DATABASE_URI'] = \
-        'postgresql+psycopg2://{user}:{pw}@{url}/{db}'. \
-        format(user=POSTGRES_USER, pw=POSTGRES_PW, url=POSTGRES_URL, db=POSTGRES_DB)
+    APP.config['SQLALCHEMY_DATABASE_URI'] = \
+        'postgresql+psycopg2://{user}:{pw}@{url}/{DB}'. \
+            format(user=POSTGRES_USER, pw=POSTGRES_PW, url=POSTGRES_URL, DB=POSTGRES_DB)
 
-db = SQLAlchemy(app)
+DB = SQLAlchemy(APP)
 
 # Relaciones N:M
 
 # Relacion 'comprende'
-categorizacion = db.Table('categorizacion',
-                          db.Column('categoria', db.String(20), db.ForeignKey('categoria.nombre')),
-                          db.Column('cancion', db.Integer, db.ForeignKey('cancion.id'))
+categorizacion = DB.Table('categorizacion',
+                          DB.Column('categoria', DB.String(20), DB.ForeignKey('categoria.nombre')),
+                          DB.Column('cancion', DB.Integer, DB.ForeignKey('cancion.id'))
                           )
 # Relacion 'compone'
-composicion = db.Table('composicion',
-                       db.Column('artista', db.String(20), db.ForeignKey('artista.nombre')),
-                       db.Column('cancion', db.Integer, db.ForeignKey('cancion.id'))
+composicion = DB.Table('composicion',
+                       DB.Column('artista', DB.String(20), DB.ForeignKey('artista.nombre')),
+                       DB.Column('cancion', DB.Integer, DB.ForeignKey('cancion.id'))
                        )
 # Relacion 'publica'
-publicacion = db.Table('publicacion',
-                       db.Column('artista', db.String(20), db.ForeignKey('artista.nombre')),
-                       db.Column('album', db.String(20), db.ForeignKey('album.nombre'))
+publicacion = DB.Table('publicacion',
+                       DB.Column('artista', DB.String(20), DB.ForeignKey('artista.nombre')),
+                       DB.Column('album', DB.String(20), DB.ForeignKey('album.nombre'))
                        )
 
 # Relacion 'aparece'
-aparicion = db.Table('aparicion',
-                     db.Column('lista', db.Integer, db.ForeignKey('lista.id')),
-                     db.Column('cancion', db.Integer, db.ForeignKey('cancion.id'))
+aparicion = DB.Table('aparicion',
+                     DB.Column('lista', DB.Integer, DB.ForeignKey('lista.id')),
+                     DB.Column('cancion', DB.Integer, DB.ForeignKey('cancion.id'))
                      )
 
 # Relacion 'conoce'
-amistad = db.Table('amistad',
-                   db.Column('usuario1', db.String(25), db.ForeignKey('usuario.email')),
-                   db.Column('usuario2', db.String(25), db.ForeignKey('usuario.email'))
+amistad = DB.Table('amistad',
+                   DB.Column('usuario1', DB.String(25), DB.ForeignKey('usuario.email')),
+                   DB.Column('usuario2', DB.String(25), DB.ForeignKey('usuario.email'))
                    )
 
 
-class Categoria(db.Model):
-    nombre = db.Column(db.String(20), primary_key=True)
-    descripcion = db.Column(db.String(100))
-    canciones = db.relationship('Cancion', secondary=categorizacion, backref=db.backref('categorias'))
+class Categoria(DB.Model):
+    nombre = DB.Column(DB.String(20), primary_key=True)
+    descripcion = DB.Column(DB.String(100))
+    canciones = DB.relationship('Cancion',
+                                secondary=categorizacion, backref=DB.backref('categorias'))
 
 
-class Artista(db.Model):
-    nombre = db.Column(db.String(20), primary_key=True)
-    fecha_nacimiento = db.Column(db.DateTime)
-    pais = db.Column(db.String(40))
-    alias = db.Column(db.String(20))
-    composiciones = db.relationship('Cancion', secondary=composicion, backref=db.backref('artistas'))
-    publicaciones = db.relationship('Album', secondary=publicacion,
-                                    backref=db.backref('artistas'))
+class Artista(DB.Model):
+    nombre = DB.Column(DB.String(20), primary_key=True)
+    fecha_nacimiento = DB.Column(DB.DateTime)
+    pais = DB.Column(DB.String(40))
+    alias = DB.Column(DB.String(20))
+    composiciones = DB.relationship('Cancion',
+                                    secondary=composicion, backref=DB.backref('artistas'))
+    publicaciones = DB.relationship('Album',
+                                    secondary=publicacion, backref=DB.backref('artistas'))
 
 
-class Album(db.Model):
-    nombre = db.Column(db.String(20), primary_key=True)
-    descripcion = db.Column(db.String(100))
-    fecha = db.Column(db.DateTime)
-    foto = db.Column(db.String(50))
-    canciones = db.relationship('Cancion', backref='album')  # Relacion 'compuesto'
+class Album(DB.Model):
+    nombre = DB.Column(DB.String(20), primary_key=True)
+    descripcion = DB.Column(DB.String(100))
+    fecha = DB.Column(DB.DateTime)
+    foto = DB.Column(DB.String(50))
+    canciones = DB.relationship('Cancion', backref='album')  # Relacion 'compuesto'
 
 
-class Lista(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(20), nullable=False)
-    descripcion = db.Column(db.String(100))
-    canciones = db.relationship('Cancion', secondary=aparicion, backref=db.backref('listas'))
-    email_usuario = db.Column(db.String(25), db.ForeignKey('usuario.email'))
-    comparticiones = db.relationship('ListaCompartida', backref='lista')  # Relacion 'compartida'
+class Lista(DB.Model):
+    id = DB.Column(DB.Integer, primary_key=True)
+    nombre = DB.Column(DB.String(20), nullable=False)
+    descripcion = DB.Column(DB.String(100))
+    canciones = DB.relationship('Cancion', secondary=aparicion, backref=DB.backref('listas'))
+    email_usuario = DB.Column(DB.String(25), DB.ForeignKey('usuario.email'))
+    comparticiones = DB.relationship('ListaCompartida', backref='lista')  # Relacion 'compartida'
 
 
-class Usuario(db.Model):
-    email = db.Column(db.String(25), primary_key=True)
-    nombre = db.Column(db.String(20), nullable=False)
-    password = db.Column(db.String, nullable=False)
-    fecha_nacimiento = db.Column(db.DateTime)
-    pais = db.Column(db.String(40))
-    foto = db.Column(db.String(50))
-    token = db.Column(db.String(), unique=True)
-    fcm_token = db.Column(db.String(), unique=True)
-    amistades = db.relationship('Usuario', secondary='amistad', primaryjoin=email == amistad.c.usuario1,
+class Usuario(DB.Model):
+    email = DB.Column(DB.String(25), primary_key=True)
+    nombre = DB.Column(DB.String(20), nullable=False)
+    password = DB.Column(DB.String, nullable=False)
+    fecha_nacimiento = DB.Column(DB.DateTime)
+    pais = DB.Column(DB.String(40))
+    foto = DB.Column(DB.String(50))
+    token = DB.Column(DB.String(), unique=True)
+    fcm_token = DB.Column(DB.String(), unique=True)
+    amistades = DB.relationship('Usuario', secondary='amistad',
+                                primaryjoin=email == amistad.c.usuario1,
                                 secondaryjoin=amistad.c.usuario2 == email)
-    listas = db.relationship('Lista', backref='usuario')  # Relacion 'tiene'
-    id_ultima_cancion = db.Column(db.Integer, db.ForeignKey('cancion.id'))
-    segundo_ultima_cancion = db.Column(db.Integer)
+    listas = DB.relationship('Lista', backref='usuario')  # Relacion 'tiene'
+    id_ultima_cancion = DB.Column(DB.Integer, DB.ForeignKey('cancion.id'))
+    segundo_ultima_cancion = DB.Column(DB.Integer)
 
     # Relacion 'recibe'
-    solicitudes_recibidas = db.relationship('Solicitud', backref='notificado',
+    solicitudes_recibidas = DB.relationship('Solicitud', backref='notificado',
                                             foreign_keys="Solicitud.email_usuario_notificado")
 
     # Relacion 'envia'
-    solicitudes_enviadas = db.relationship('Solicitud', backref='notificante',
+    solicitudes_enviadas = DB.relationship('Solicitud', backref='notificante',
                                            foreign_keys="Solicitud.email_usuario_notificante")
 
     # Relacion 'recibe'
-    listas_recibidas = db.relationship('ListaCompartida', backref='notificado',
+    listas_recibidas = DB.relationship('ListaCompartida', backref='notificado',
                                        foreign_keys="ListaCompartida.email_usuario_notificado")
 
     # Relacion 'envia'
-    listas_enviadas = db.relationship('ListaCompartida', backref='notificante',
+    listas_enviadas = DB.relationship('ListaCompartida', backref='notificante',
                                       foreign_keys="ListaCompartida.email_usuario_notificante")
 
     # Relacion 'envia'
-    canciones_enviadas = db.relationship('CancionCompartida', backref='notificante',
+    canciones_enviadas = DB.relationship('CancionCompartida', backref='notificante',
                                          foreign_keys="CancionCompartida.email_usuario_notificante")
 
     # Relacion 'recibe'
-    canciones_recibidas = db.relationship('CancionCompartida', backref='notificado',
+    canciones_recibidas = DB.relationship('CancionCompartida', backref='notificado',
                                           foreign_keys="CancionCompartida.email_usuario_notificado")
 
 
-class Solicitud(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    email_usuario_notificado = db.Column(db.String(25), db.ForeignKey('usuario.email'))
-    email_usuario_notificante = db.Column(db.String(25), db.ForeignKey('usuario.email'))
+class Solicitud(DB.Model):
+    id = DB.Column(DB.Integer, primary_key=True)
+    email_usuario_notificado = DB.Column(DB.String(25), DB.ForeignKey('usuario.email'))
+    email_usuario_notificante = DB.Column(DB.String(25), DB.ForeignKey('usuario.email'))
 
 
-class ListaCompartida(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    id_lista = db.Column(db.Integer, db.ForeignKey('lista.id'))
-    email_usuario_notificado = db.Column(db.String(25), db.ForeignKey('usuario.email'))
-    email_usuario_notificante = db.Column(db.String(25), db.ForeignKey('usuario.email'))
+class ListaCompartida(DB.Model):
+    id = DB.Column(DB.Integer, primary_key=True)
+    id_lista = DB.Column(DB.Integer, DB.ForeignKey('lista.id'))
+    email_usuario_notificado = DB.Column(DB.String(25), DB.ForeignKey('usuario.email'))
+    email_usuario_notificante = DB.Column(DB.String(25), DB.ForeignKey('usuario.email'))
 
 
-class CancionCompartida(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    id_cancion = db.Column(db.Integer, db.ForeignKey('cancion.id'))
-    email_usuario_notificado = db.Column(db.String(25), db.ForeignKey('usuario.email'))
-    email_usuario_notificante = db.Column(db.String(25), db.ForeignKey('usuario.email'))
+class CancionCompartida(DB.Model):
+    id = DB.Column(DB.Integer, primary_key=True)
+    id_cancion = DB.Column(DB.Integer, DB.ForeignKey('cancion.id'))
+    email_usuario_notificado = DB.Column(DB.String(25), DB.ForeignKey('usuario.email'))
+    email_usuario_notificante = DB.Column(DB.String(25), DB.ForeignKey('usuario.email'))
 
 
-class Cancion(db.Model):
-    id = db.Column(db.Integer, primary_key=True)  # Cambiar por clave compuesta
-    path = db.Column(db.String(150), nullable=False)
-    nombre = db.Column(db.String(20), nullable=False)
-    duracion = db.Column(db.Integer, nullable=False)  # Segundos
-    nombre_album = db.Column(db.String(20), db.ForeignKey('album.nombre'))
-    comparticiones = db.relationship('CancionCompartida', backref='cancion')  # Relacion 'compartida'
-    reproducciones = db.relationship('Usuario', backref='ultima_cancion')  # Relacion 'ultima'
+class Cancion(DB.Model):
+    id = DB.Column(DB.Integer, primary_key=True)  # Cambiar por clave compuesta
+    path = DB.Column(DB.String(150), nullable=False)
+    nombre = DB.Column(DB.String(20), nullable=False)
+    duracion = DB.Column(DB.Integer, nullable=False)  # Segundos
+    nombre_album = DB.Column(DB.String(20), DB.ForeignKey('album.nombre'))
+
+    # Relacion 'compartida'
+    comparticiones = DB.relationship('CancionCompartida', backref='cancion')
+
+    # Relacion 'ultima'
+    reproducciones = DB.relationship('Usuario', backref='ultima_cancion')
 
 
-db.create_all()
+DB.create_all()
 
 
 def leer_todo(tabla):
-    return db.session.query(tabla).all()
+    """
+    Devuelve todos los datos de la tabla especificada
+    :param tabla:
+    :return:
+    """
+    return DB.session.query(tabla).all()
 
 
 def fetch_data_by_id(table, clave):
+    """
+    Devuelve el dato con clave <clave> de la tabla <tabla>
+    :param table:
+    :param clave:
+    :return:
+    """
     try:
-        data = db.session.query(table).filter_by(id=clave).first()
+        data = DB.session.query(table).filter_by(id=clave).first()
         return data
     except IntegrityError:
-        db.session.rollback()
+        DB.session.rollback()
         return "error"
