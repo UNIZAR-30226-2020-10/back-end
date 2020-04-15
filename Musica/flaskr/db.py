@@ -95,7 +95,7 @@ class Album(DB.Model):
     nombre = DB.Column(DB.String(20), primary_key=True)
     descripcion = DB.Column(DB.String(100))
     fecha = DB.Column(DB.DateTime)
-    foto = DB.Column(DB.String(100), default='https://psoftware.s3.amazonaws.com/album_defecto.jpg')
+    foto = DB.Column(DB.String(100))
     canciones = DB.relationship('Cancion', backref='album')  # Relacion 'compuesto'
 
 
