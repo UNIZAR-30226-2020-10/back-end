@@ -133,11 +133,6 @@ def poblar():
     artistas[12].composiciones.append(canciones[5])
     artistas[13].composiciones.append(canciones[9])
 
-
-
-
-
-
     # Relacion publicacion
     artistas[0].publicaciones.append(albumes[0])
     artistas[0].publicaciones.append(albumes[1])
