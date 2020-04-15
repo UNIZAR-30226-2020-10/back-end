@@ -95,7 +95,8 @@ class Album(DB.Model):
     nombre = DB.Column(DB.String(20), primary_key=True)
     descripcion = DB.Column(DB.String(100))
     fecha = DB.Column(DB.DateTime)
-    foto = DB.Column(DB.String(50))
+    foto = DB.Column(DB.String(50), default='https://psoftware.s3.amazonaws.com/album_defecto.jpg'
+)
     canciones = DB.relationship('Cancion', backref='album')  # Relacion 'compuesto'
 
 
@@ -114,7 +115,7 @@ class Usuario(DB.Model):
     password = DB.Column(DB.String, nullable=False)
     fecha_nacimiento = DB.Column(DB.DateTime)
     pais = DB.Column(DB.String(40))
-    foto = DB.Column(DB.String(50))
+    foto = DB.Column(DB.String(50), default='https://psoftware.s3.amazonaws.com/user_default.jpg')
     token = DB.Column(DB.String(), unique=True)
     fcm_token = DB.Column(DB.String(), unique=True)
     amistades = DB.relationship('Usuario', secondary='amistad',

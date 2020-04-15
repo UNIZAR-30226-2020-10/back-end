@@ -15,7 +15,6 @@ def poblar():
         Categoria(nombre='EDM', descripcion='Categoria EDM'),
         Categoria(nombre='Electronica', descripcion='Categoria Electronic'),
         Categoria(nombre='Clasica', descripcion='Categoria Clasica'),
-
     ]
 
     artistas = [
@@ -37,8 +36,7 @@ def poblar():
 
     albumes = [
         Album(nombre='Mi album 1', descripcion='album 1', fecha=datetime.datetime(2000, 6, 1)),
-        Album(nombre='Mi album 2', descripcion='album 2', fecha=datetime.datetime(2015, 6, 1)),
-        Album(nombre='Mi album 3', descripcion='album 3', fecha=datetime.datetime(2015, 6, 1))
+        Album(nombre='Mi album 2', descripcion='album 2', fecha=datetime.datetime(2015, 6, 1))
     ]
 
     listas = [
@@ -173,11 +171,17 @@ def poblar():
     # Relacion compuesto
     albumes[0].canciones.append(canciones[0])
     albumes[0].canciones.append(canciones[1])
-    canciones[1].album = albumes[1]  # Sobreescribe lo anterior aposta
+    albumes[0].canciones.append(canciones[2])
+    albumes[0].canciones.append(canciones[3])
+    albumes[0].canciones.append(canciones[4])
+    albumes[0].canciones.append(canciones[5])
+    albumes[0].canciones.append(canciones[6])
+    albumes[1].canciones.append(canciones[7])
+    albumes[1].canciones.append(canciones[8])
+    albumes[1].canciones.append(canciones[9])
+    albumes[1].canciones.append(canciones[10])
     albumes[1].canciones.append(canciones[11])
-    albumes[1].canciones.append(canciones[1])
-    albumes[2].canciones.append(canciones[5])
-    albumes[2].canciones.append(canciones[5])
+
 
     # Relacion tiene
     usuarios[0].listas.append(listas[0])
