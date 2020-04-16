@@ -1,30 +1,23 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<script src="static/Javascript/audio.js"></script>
 <head>
-    <meta charset="UTF-8">
-    <title>Música</title>
+    <meta charset="utf-8">
+    <title>TuneIT</title>
+    <base href="static/TuneIT/">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="styles.406d8fd02daca4166c61.css">
 </head>
-<body>
-
-<form method="ger">
-    {% for line in response %}
-            <script type="text/javascript">reproduce("{{ line }}");</script>
-            <!--<audio controls="controls" autoplay="autoplay" src="{{line}}"></audio>-->
-        {% endfor %}
-        <button type="submit">Click here</button>
-    </form>
-    <form action="/list_data" method="post">
-        <input name="list" />
-        <button type="submit">Add</button>
-    </form>
-    <form action="/register" method="get">
-        <input name="email" />
-        <input name="nombre" />
-        <input type=password name="password" />
-        <input type=date name="fecha" />
-        <input name="pais" />
-        <button type="submit">Registro</button>
-    </form>
+<body class="mat-typography">
+<app-root></app-root>
+<script src="runtime-es2015.0811dcefd377500b5b1a.js" type="module"></script>
+<script src="runtime-es5.0811dcefd377500b5b1a.js" nomodule defer></script>
+<script src="polyfills-es5.fd3af48698f9b02947d9.js" nomodule defer></script>
+<script src="polyfills-es2015.442fa3cc45520cc0d518.js" type="module"></script>
+<script src="scripts.581707120fadb9c12688.js" defer></script>
+<script src="main-es2015.ce759d1eb7ce3fdd1f84.js" type="module"></script>
+<script src="main-es5.ce759d1eb7ce3fdd1f84.js" nomodule defer></script>
 </body>
 </html>
