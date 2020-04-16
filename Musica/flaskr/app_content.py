@@ -23,7 +23,7 @@ def index():
     Esto desaparecerá
     :return:
     """
-    return render_template("index2.html")
+    return render_template("index.html")
 
 
 def listar_canciones(canciones):
