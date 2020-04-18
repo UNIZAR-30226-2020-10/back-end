@@ -213,6 +213,7 @@ class CapituloPodcast(DB.Model):
     id_serie = DB.Column(DB.Integer, DB.ForeignKey('serie_podcast.id'))
 
 
+# DB.drop_all()
 DB.create_all()
 
 

@@ -151,7 +151,7 @@ def buscar_categorias(req):
 def buscar_categorias_list(req):
     """
     Devuelve una lista con las canciones contenidas en la lista especificada cuya categoria se
-    encuentre en lalista de categorias presente en la petición
+    encuentre en la lista de categorias presente en la petición
     :param req:
     :return:
     """
@@ -175,7 +175,7 @@ def buscar_categorias_list(req):
         .filter(Categoria.nombre.in_(dato), Categoria.canciones)
 
     datos = [cancion for cancion in datos if cancion in [ass.canciones for ass in lista.canciones]]
-    return datos
+    return datos, True
 
 
 def search(req):
@@ -438,23 +438,29 @@ def reorder_list():
         before = request.args["before"]
         after = request.args["after"]
 
+    before = int(before)
+    after = int(after)
     apariciones = DB.session.query(Aparicion).filter_by(lista=lista)
     if before > after:
         min_lim = after
         max_lim = before
-        index = 1
+        indice = 1
     else:
-        min_lim = before
-        max_lim = after
-        index = -1
+        min_lim = before + 1
+        max_lim = after + 1
+        indice = -1
 
     for aparicion in apariciones:
-        if aparicion.orden in range(int(min_lim) + 1, int(max_lim) + 1):
-            aparicion.orden += index
-        elif aparicion.orden == int(before):
-            aparicion.orden = int(after)
+        if aparicion.orden in range(min_lim, max_lim):
+            aparicion.orden += indice
+        elif aparicion.orden == before:
+            aparicion.orden = after
 
-    DB.session.commit()
+    try:
+        DB.session.commit()
+    except (IntegrityError, OperationalError):
+        return "Error"
+
     return "Success"
 
 
@@ -487,7 +493,10 @@ def filter_category_list():
     reproducción indicada
     :return:
     """
-    canciones = buscar_categorias_list(request)
+    canciones, exito = buscar_categorias_list(request)
+    if not exito:
+        return canciones
+
     result = listar_canciones(canciones)
     return jsonify(result)
 
