@@ -67,11 +67,12 @@ def insertar_cancion_album_lista(nombre_cancion, nombre_album):
     cancion = insertar_cancion(nombre_cancion, album.nombre)
     lista = insert_lista_test()
 
-    lista.canciones.append(cancion)
+    aparicion = Aparicion(canciones=cancion, orden=len(lista.canciones))
+    lista.canciones.append(aparicion)
     DB.session.add(lista)
     DB.session.commit()
 
-    return cancion, album, lista
+    return cancion, album, lista, aparicion
 
 
 def insertar_cancion_album_artista(nombre_cancion, nombre_album, nombre_artista):
@@ -91,11 +92,12 @@ def insertar_cancion_album_artista_lista(nombre_cancion, nombre_album, nombre_ar
                                                              nombre_artista)
     lista = insert_lista_test()
 
-    lista.canciones.append(cancion)
+    aparicion = Aparicion(canciones=cancion, orden=len(lista.canciones))
+    lista.canciones.append(aparicion)
     DB.session.add(lista)
     DB.session.commit()
 
-    return cancion, album, artista, lista
+    return cancion, album, artista, lista, aparicion
 
 
 def insert_lista_test():
@@ -114,7 +116,9 @@ def insert_categoria():
     return categoria
 
 
-def delete_lista_test(lista):
+def delete_lista_test(lista, aparicion=None):
+    if aparicion is not None:
+        DB.session.delete(aparicion)
     DB.session.delete(lista)
     DB.session.commit()
 
@@ -146,6 +150,23 @@ def comprobar_json(obj, status, res, res_esperado):
     obj.assertEqual(correcto, True, "El contenido devuelto no tiene el formato correcto")
 
     obj.assertEqual(data, res_esperado)
+
+
+def buscar_en_lista(tipo, obj):
+    cancion, album, lista, aparicion = insertar_cancion_album_lista("Song1", "Album1")
+
+    if tipo == "cancion":
+        tipo = cancion
+    else:
+        tipo = album
+
+    status, res = curl(
+        'http://localhost:5000/search_in_list?Nombre=%s&Lista=%s' % (tipo.nombre, lista.id))
+
+    comprobar_json(obj, status, res, get_single_song_esperado(cancion))
+
+    delete_lista_test(lista, aparicion)
+    delete_cancion_album(cancion, album)
 
 
 def get_single_song_esperado(cancion):
@@ -185,24 +206,25 @@ class MyTestCase(unittest.TestCase):
                          "Desc": lista.descripcion}]
         self.assertEqual(data, res_esperado)
 
-        delete_lista_test(lista)
+        delete_lista_test(lista, None)
 
     def test_list_data(self):
         cancion, album = insertar_cancion_album("Song1", "Album1")
         lista = insert_lista_test()
-        lista.canciones.append(cancion)
+        aparicion = Aparicion(canciones=cancion, orden=len(lista.canciones))
+        lista.canciones.append(aparicion)
         DB.session.add(lista)
         DB.session.commit()
 
         status, res = curl('http://localhost:5000/list_data?list=%s' % lista.id)
 
         res_esperado = {"ID": lista.id, "Nombre": lista.nombre,
-                        "Imagen": lista.canciones[0].album.foto,
+                        "Imagen": lista.canciones[0].canciones.album.foto,
                         "Desc": lista.descripcion,
                         "Canciones": get_single_song_esperado(cancion)}
         comprobar_json(self, status, res, res_esperado)
 
-        delete_lista_test(lista)
+        delete_lista_test(lista, aparicion)
         delete_cancion_album(cancion, album)
 
     def test_crear_lista(self):
@@ -214,6 +236,18 @@ class MyTestCase(unittest.TestCase):
         elements = DB.session.query(Lista).filter_by(nombre='TEST_LIST').all()
         DB.session.delete(elements[0])
         DB.session.commit()
+
+    def test_eliminar_lista_con_datos(self):
+        cancion, album, lista, aparicion = insertar_cancion_album_lista("Song1",
+                                                                        "Album1")
+
+        status, res = curl('http://localhost:5000/delete_list?list=%d' % lista.id)
+        self.assertRegex(str(status), '2[0-9][0-9]', "Peticion no exitosa")
+
+        self.assertNotEqual(res, "ERROR", "No se ha eliminado la lista")
+
+        delete_cancion(cancion)
+        delete_album(album)
 
     def test_eliminar_lista(self):
         lista = Lista(nombre="Test_lista_delete", descripcion="Test_desc_delete")
@@ -238,8 +272,10 @@ class MyTestCase(unittest.TestCase):
 
         self.assertEqual(res, "Success", "No se ha podido añadir")
 
+        DB.session.delete(DB.session.query(Aparicion).filter_by(lista=lista.id,
+                                                                cancion=cancion.id).first())
         DB.session.delete(lista)
-        DB.session.delete(cancion)
+        delete_cancion(cancion)
         DB.session.commit()
 
     def test_search_song(self):
@@ -247,12 +283,14 @@ class MyTestCase(unittest.TestCase):
         cancion2 = insertar_cancion(cancion.nombre, album.nombre)
         status, res = curl('http://localhost:5000/search?Nombre=%s' % cancion.nombre)
 
-        res_esperado = [{"ID": cancion.id, "Nombre": cancion.nombre, "Artistas": cancion.artistas,
-                         "URL": cancion.path, "Imagen": cancion.album.foto,
-                         "Album": cancion.nombre_album},
-                        {"ID": cancion2.id, "Nombre": cancion2.nombre, "Artistas": cancion2.artistas,
+        res_esperado = [{"ID": cancion2.id, "Nombre": cancion2.nombre,
+                         "Artistas": cancion2.artistas,
                          "URL": cancion2.path, "Imagen": cancion2.album.foto,
-                         "Album": cancion2.nombre_album}]
+                         "Album": cancion2.nombre_album},
+                        {"ID": cancion.id, "Nombre": cancion.nombre,
+                         "Artistas": cancion.artistas,
+                         "URL": cancion.path, "Imagen": cancion.album.foto,
+                         "Album": cancion.nombre_album}]
 
         comprobar_json(self, status, res, res_esperado)
 
@@ -293,33 +331,15 @@ class MyTestCase(unittest.TestCase):
         delete_cancion_album(cancion, album)
 
     def test_search_song_on_list(self):
-        cancion, album, lista = insertar_cancion_album_lista("Song1", "Album1")
-
-        status, res = curl('http://localhost:5000/search_in_list?Nombre=%s&Lista=%s' % (cancion.nombre, lista.id))
-
-        comprobar_json(self, status, res, get_single_song_esperado(cancion))
-
-        delete_lista_test(lista)
-        delete_cancion_album(cancion, album)
+        buscar_en_lista('cancion', self)
 
     def test_search_song_by_album_on_list(self):
-        cancion, album = insertar_cancion_album("Song1", "Album1")
-        lista = insert_lista_test()
-
-        lista.canciones.append(cancion)
-        DB.session.add(lista)
-        DB.session.commit()
-
-        status, res = curl('http://localhost:5000/search_in_list?Nombre=%s&Lista=%s'
-                           % (album.nombre, lista.id))
-
-        comprobar_json(self, status, res, get_single_song_esperado(cancion))
-
-        delete_lista_test(lista)
-        delete_cancion_album(cancion, album)
+        buscar_en_lista('album', self)
 
     def test_search_song_by_artist_on_list(self):
-        cancion, album, artista, lista = insertar_cancion_album_artista_lista("Song1", "Album1", "Artista1")
+        cancion, album, artista, lista, aparicion = insertar_cancion_album_artista_lista("Song1",
+                                                                                         "Album1",
+                                                                                         "Artista1")
 
         status, res = curl('http://localhost:5000/search_in_list?Nombre=%s&Lista=%s'
                            % (artista.nombre, lista.id))
@@ -327,7 +347,7 @@ class MyTestCase(unittest.TestCase):
         comprobar_json(self, status, res, get_single_song_esperado(cancion))
 
         DB.session.delete(artista)
-        delete_lista_test(lista)
+        delete_lista_test(lista, aparicion)
         delete_cancion_album(cancion, album)
 
     def test_filter_categorias(self):
@@ -346,7 +366,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_filter_categorias_lista(self):
         categoria = insert_categoria()
-        cancion, album, lista = insertar_cancion_album_lista("Song1", "Album1")
+        cancion, album, lista, aparicion = insertar_cancion_album_lista("Song1", "Album1")
 
         categoria.canciones.append(cancion)
         DB.session.commit()
@@ -357,7 +377,7 @@ class MyTestCase(unittest.TestCase):
         comprobar_json(self, status, res, get_single_song_esperado(cancion))
 
         delete_categoria(categoria)
-        delete_lista_test(lista)
+        delete_lista_test(lista, aparicion)
         delete_cancion_album(cancion, album)
 
     # Test complementarios a implementar:

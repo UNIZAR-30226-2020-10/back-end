@@ -7,6 +7,11 @@ Pruebas y poblar base de datos
 from flaskr.db import *
 import datetime
 
+
+def insert_to_list(lista, cancion):
+    lista.append(Aparicion(canciones=cancion, orden=len(lista)))
+
+
 DB.drop_all()
 DB.create_all()
 
@@ -71,18 +76,30 @@ canciones_compartidas = [
 ]
 
 canciones = [
-    Cancion(path='https://psoftware.s3.amazonaws.com/alan_walker-fade.mp3', nombre='Fade', duracion=120),
-    Cancion(path='https://psoftware.s3.amazonaws.com/alan_walker-spectre.mp3', nombre='Spectre', duracion=180),
-    Cancion(path='https://psoftware.s3.amazonaws.com/cartoon-on_and_on-daniel-levi.mp3', nombre='On & on', duracion=180),
-    Cancion(path='https://psoftware.s3.amazonaws.com/cartoon-why_we_lose-coleman_trapp.mp3', nombre='Why we lose', duracion=180),
-    Cancion(path='https://psoftware.s3.amazonaws.com/deaf_kev-invincible.mp3', nombre='Invincible', duracion=180),
-    Cancion(path='https://psoftware.s3.amazonaws.com/different_heaven-my_heart-ehde.mp3', nombre='My heart', duracion=180),
-    Cancion(path='https://psoftware.s3.amazonaws.com/disfigure-blank.mp3', nombre='Blank', duracion=180),
-    Cancion(path='https://psoftware.s3.amazonaws.com/electro_light-symbolism.mp3', nombre='Symbolism', duracion=180),
-    Cancion(path='https://psoftware.s3.amazonaws.com/elektronomia-sky_high.mp3', nombre='Skyhigh', duracion=180),
-    Cancion(path='https://psoftware.s3.amazonaws.com/janji-heroes_tonight-johnning.mp3', nombre='Heroes tonigth', duracion=180),
-    Cancion(path='https://psoftware.s3.amazonaws.com/spektrem-shine.mp3', nombre='Shine', duracion=180),
-    Cancion(path='https://psoftware.s3.amazonaws.com/tobu-hope.mp3', nombre='Hope', duracion=180),
+    Cancion(path='https://psoftware.s3.amazonaws.com/alan_walker-fade.mp3',
+            nombre='Fade', duracion=120),
+    Cancion(path='https://psoftware.s3.amazonaws.com/alan_walker-spectre.mp3',
+            nombre='Spectre', duracion=180),
+    Cancion(path='https://psoftware.s3.amazonaws.com/cartoon-on_and_on-daniel-levi.mp3',
+            nombre='On & on', duracion=180),
+    Cancion(path='https://psoftware.s3.amazonaws.com/cartoon-why_we_lose-coleman_trapp.mp3',
+            nombre='Why we lose', duracion=180),
+    Cancion(path='https://psoftware.s3.amazonaws.com/deaf_kev-invincible.mp3',
+            nombre='Invincible', duracion=180),
+    Cancion(path='https://psoftware.s3.amazonaws.com/different_heaven-my_heart-ehde.mp3',
+            nombre='My heart', duracion=180),
+    Cancion(path='https://psoftware.s3.amazonaws.com/disfigure-blank.mp3',
+            nombre='Blank', duracion=180),
+    Cancion(path='https://psoftware.s3.amazonaws.com/electro_light-symbolism.mp3',
+            nombre='Symbolism', duracion=180),
+    Cancion(path='https://psoftware.s3.amazonaws.com/elektronomia-sky_high.mp3',
+            nombre='Skyhigh', duracion=180),
+    Cancion(path='https://psoftware.s3.amazonaws.com/janji-heroes_tonight-johnning.mp3',
+            nombre='Heroes tonigth', duracion=180),
+    Cancion(path='https://psoftware.s3.amazonaws.com/spektrem-shine.mp3',
+            nombre='Shine', duracion=180),
+    Cancion(path='https://psoftware.s3.amazonaws.com/tobu-hope.mp3',
+            nombre='Hope', duracion=180),
 ]
 
 series_podcast = [
@@ -152,23 +169,23 @@ artistas[0].publicaciones.append(albumes[1])
 albumes[0].artistas.append(artistas[1])
 
 # Relacion aparece
-listas[0].canciones.append(canciones[0])
-listas[0].canciones.append(canciones[1])
-listas[0].canciones.append(canciones[2])
-listas[0].canciones.append(canciones[3])
-listas[1].canciones.append(canciones[4])
-listas[1].canciones.append(canciones[5])
-listas[1].canciones.append(canciones[6])
-listas[1].canciones.append(canciones[7])
-listas[2].canciones.append(canciones[8])
-listas[2].canciones.append(canciones[9])
-listas[2].canciones.append(canciones[10])
-listas[2].canciones.append(canciones[11])
-listas[2].canciones.append(canciones[1])
-listas[2].canciones.append(canciones[2])
-listas[2].canciones.append(canciones[3])
-listas[3].canciones.append(canciones[4])
-listas[3].canciones.append(canciones[5])
+insert_to_list(listas[0].canciones, canciones[0])
+insert_to_list(listas[0].canciones, canciones[1])
+insert_to_list(listas[0].canciones, canciones[2])
+insert_to_list(listas[0].canciones, canciones[3])
+insert_to_list(listas[1].canciones, canciones[4])
+insert_to_list(listas[1].canciones, canciones[5])
+insert_to_list(listas[1].canciones, canciones[6])
+insert_to_list(listas[1].canciones, canciones[7])
+insert_to_list(listas[2].canciones, canciones[8])
+insert_to_list(listas[2].canciones, canciones[9])
+insert_to_list(listas[2].canciones, canciones[10])
+insert_to_list(listas[2].canciones, canciones[11])
+insert_to_list(listas[2].canciones, canciones[1])
+insert_to_list(listas[2].canciones, canciones[2])
+insert_to_list(listas[2].canciones, canciones[3])
+insert_to_list(listas[0].canciones, canciones[4])
+insert_to_list(listas[0].canciones, canciones[5])
 
 # Relacion amistad
 usuarios[0].amistades.append(usuarios[1])
@@ -190,7 +207,6 @@ albumes[1].canciones.append(canciones[9])
 albumes[1].canciones.append(canciones[10])
 albumes[1].canciones.append(canciones[11])
 
-
 # Relacion tiene
 usuarios[0].listas.append(listas[0])
 usuarios[1].listas.append(listas[1])
@@ -210,20 +226,26 @@ usuarios[1].id_ultima_cancion = canciones[0].id
 
 # Relaciones recibe y envia (solicitud, listacompartida y cancioncompartida)
 solicitudes = [
-    Solicitud(email_usuario_notificado=usuarios[0].email, email_usuario_notificante=usuarios[1].email),
-    Solicitud(email_usuario_notificado=usuarios[1].email, email_usuario_notificante=usuarios[0].email)
+    Solicitud(email_usuario_notificado=usuarios[0].email,
+              email_usuario_notificante=usuarios[1].email),
+    Solicitud(email_usuario_notificado=usuarios[1].email,
+              email_usuario_notificante=usuarios[0].email)
 ]
 DB.session.add_all(solicitudes)
 
 listas_compartidas = [
-    ListaCompartida(email_usuario_notificado=usuarios[0].email, email_usuario_notificante=usuarios[1].email),
-    ListaCompartida(email_usuario_notificado=usuarios[1].email, email_usuario_notificante=usuarios[0].email)
+    ListaCompartida(email_usuario_notificado=usuarios[0].email,
+                    email_usuario_notificante=usuarios[1].email),
+    ListaCompartida(email_usuario_notificado=usuarios[1].email,
+                    email_usuario_notificante=usuarios[0].email)
 ]
 DB.session.add_all(listas_compartidas)
 
 canciones_compartidas = [
-    CancionCompartida(email_usuario_notificado=usuarios[0].email, email_usuario_notificante=usuarios[1].email),
-    CancionCompartida(email_usuario_notificado=usuarios[1].email, email_usuario_notificante=usuarios[0].email)
+    CancionCompartida(email_usuario_notificado=usuarios[0].email,
+                      email_usuario_notificante=usuarios[1].email),
+    CancionCompartida(email_usuario_notificado=usuarios[1].email,
+                      email_usuario_notificante=usuarios[0].email)
 ]
 DB.session.add_all(canciones_compartidas)
 

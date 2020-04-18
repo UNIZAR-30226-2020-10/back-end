@@ -59,13 +59,14 @@ publicacion = DB.Table('publicacion',
                        DB.Column('artista', DB.String(20), DB.ForeignKey('artista.nombre')),
                        DB.Column('album', DB.String(20), DB.ForeignKey('album.nombre'))
                        )
-
+"""
 # Relacion 'aparece'
 aparicion = DB.Table('aparicion',
                      DB.Column('lista', DB.Integer, DB.ForeignKey('lista.id')),
-                     DB.Column('cancion', DB.Integer, DB.ForeignKey('cancion.id'))
+                     DB.Column('cancion', DB.Integer, DB.ForeignKey('cancion.id')),
+                     DB.Column('orden', DB.Integer, nullable=False)
                      )
-
+"""
 # Relacion 'conoce'
 amistad = DB.Table('amistad',
                    DB.Column('usuario1', DB.String(25), DB.ForeignKey('usuario.email')),
@@ -79,10 +80,19 @@ cap_escuchado = DB.Table('cap_escuchado',
                          )
 
 
+class Aparicion(DB.Model):
+    __tablename__ = 'aparicion'
+    lista = DB.Column(DB.Integer, DB.ForeignKey('lista.id'), primary_key=True)
+    cancion = DB.Column(DB.Integer, DB.ForeignKey('cancion.id'), primary_key=True)
+    orden = DB.Column(DB.Integer, nullable=False)
+    canciones = DB.relationship('Cancion', backref=DB.backref('apariciones'))
+
+
 class Categoria(DB.Model):
     nombre = DB.Column(DB.String(20), primary_key=True)
     descripcion = DB.Column(DB.String(100))
-    canciones = DB.relationship('Cancion', secondary=categorizacion, backref=DB.backref('categorias'))
+    canciones = DB.relationship('Cancion', secondary=categorizacion,
+                                backref=DB.backref('categorias'))
 
 
 class Artista(DB.Model):
@@ -108,7 +118,7 @@ class Lista(DB.Model):
     id = DB.Column(DB.Integer, primary_key=True)
     nombre = DB.Column(DB.String(20), nullable=False)
     descripcion = DB.Column(DB.String(100))
-    canciones = DB.relationship('Cancion', secondary=aparicion, backref=DB.backref('listas'))
+    canciones = DB.relationship('Aparicion', cascade="delete")
     email_usuario = DB.Column(DB.String(25), DB.ForeignKey('usuario.email'))
     comparticiones = DB.relationship('ListaCompartida', backref='lista')  # Relacion 'compartida'
 
