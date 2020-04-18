@@ -12,9 +12,6 @@ def insert_to_list(lista, cancion):
     lista.append(Aparicion(canciones=cancion, orden=len(lista)))
 
 
-DB.drop_all()
-DB.create_all()
-
 categorias = [
     Categoria(nombre='Rock', descripcion='Categoria Rock'),
     Categoria(nombre='Pop', descripcion='Categoria Pop'),
