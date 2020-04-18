@@ -72,12 +72,17 @@ amistad = DB.Table('amistad',
                    DB.Column('usuario2', DB.String(25), DB.ForeignKey('usuario.email'))
                    )
 
+# Relacion 'escuchado'
+cap_escuchado = DB.Table('cap_escuchado',
+                         DB.Column('capitulo', DB.Integer, DB.ForeignKey('capitulo_podcast.id')),
+                         DB.Column('usuario', DB.String(25), DB.ForeignKey('usuario.email'))
+                         )
+
 
 class Categoria(DB.Model):
     nombre = DB.Column(DB.String(20), primary_key=True)
     descripcion = DB.Column(DB.String(100))
-    canciones = DB.relationship('Cancion',
-                                secondary=categorizacion, backref=DB.backref('categorias'))
+    canciones = DB.relationship('Cancion', secondary=categorizacion, backref=DB.backref('categorias'))
 
 
 class Artista(DB.Model):
@@ -148,6 +153,9 @@ class Usuario(DB.Model):
     canciones_recibidas = DB.relationship('CancionCompartida', backref='notificado',
                                           foreign_keys="CancionCompartida.email_usuario_notificado")
 
+    # Relacion 'escuchado'
+    cap_escuchados = DB.relationship('CapituloPodcast', secondary=cap_escuchado, backref=DB.backref('oyentes'))
+
 
 class Solicitud(DB.Model):
     id = DB.Column(DB.Integer, primary_key=True)
@@ -181,6 +189,18 @@ class Cancion(DB.Model):
 
     # Relacion 'ultima'
     reproducciones = DB.relationship('Usuario', backref='ultima_cancion')
+
+
+class SeriePodcast(DB.Model):
+    id = DB.Column(DB.Integer, primary_key=True)
+    nombre = DB.Column(DB.String(50), nullable=False)
+    capitulos = DB.relationship('CapituloPodcast', backref='serie')  # Relacion 'compuesta'
+
+
+class CapituloPodcast(DB.Model):
+    id = DB.Column(DB.Integer, primary_key=True)
+    nombre = DB.Column(DB.String(50))
+    id_serie = DB.Column(DB.Integer, DB.ForeignKey('serie_podcast.id'))
 
 
 DB.create_all()
