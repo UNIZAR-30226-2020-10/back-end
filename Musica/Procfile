@@ -1,1 +1,0 @@
-web: cd Musica/flaskr && flask run
