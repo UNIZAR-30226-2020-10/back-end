@@ -14,8 +14,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY Musica/flaskr ./flaskr
 COPY Musica/test ./test
 
-WORKDIR flaskr
 ENV FLASK_ENV=production
 ENV PYTHONPATH=/usr/src/Musica
 
-CMD [ "python3", "app.py" ]
+CMD [ "python3", "flaskr/app.py" ]
