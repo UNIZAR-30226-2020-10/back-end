@@ -7,6 +7,9 @@ Pruebas y poblar base de datos
 from flaskr.db import *
 import datetime
 
+DB.drop_all()
+DB.create_all()
+
 
 def insert_to_list(lista, cancion):
     lista.append(Aparicion(canciones=cancion, orden=len(lista)))

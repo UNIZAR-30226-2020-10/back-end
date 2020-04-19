@@ -8,7 +8,7 @@ from flask import request, jsonify, render_template
 from psycopg2.errors import UniqueViolation, InvalidDatetimeFormat
 from sqlalchemy.exc import DataError, OperationalError, IntegrityError
 from flaskr.db import APP, fetch_data_by_id, Lista, Cancion, DB, Categoria, Artista, leer_todo, \
-    Usuario, Aparicion
+    Usuario, Aparicion, Album
 
 
 # pylint: disable=no-member
@@ -68,7 +68,23 @@ def listar_listas(listas):
     return dictionary
 
 
-def listar_datos_lista(listas, canciones=[]):
+def listar_albums(albums, canciones):
+    album_list = []
+    for element in albums:
+        dictionary = {"Nombre": element.nombre,
+                      "Desc": element.descripcion,
+                      "fecha": element.fecha,
+                      "Artistas": [artista.nombre for artista in element.artistas]}
+
+        if canciones:
+            dictionary["Canciones"] = listar_canciones(element.canciones)
+
+        album_list.append(dictionary)
+
+    return album_list
+
+
+def listar_datos_lista(listas, canciones=None):
     """
     Formatea una lista de reproducción como un diccionario que incluye las canciones que
     pertenecen a esa lista
@@ -83,6 +99,8 @@ def listar_datos_lista(listas, canciones=[]):
     :param canciones:
     :return:
     """
+    if canciones is None:
+        canciones = []
     dictionary = {"ID": listas.id, "Nombre": listas.nombre, "Desc": listas.descripcion}
     if canciones:
         dictionary["Canciones"] = listar_canciones([ass.canciones for ass in canciones])
@@ -106,8 +124,8 @@ def obtain_song_list(req):
     """
     if req.method == "POST":
         data = req.get_json()
-        cancion = data['cancion']
-        lista = data['list']
+        cancion = int(data['cancion'])
+        lista = int(data['list'])
     else:
         cancion = int(req.args['cancion'])
         lista = int(req.args['list'])
@@ -311,6 +329,36 @@ def list_lists():
     return jsonify(dict_listas)
 
 
+@APP.route('/list_albums', methods=['POST', 'GET'])
+def list_albums():
+    try:
+        albumes = leer_todo(Album)
+    except (IntegrityError, OperationalError):
+        DB.session.rollback()
+        return "Error"
+
+    dict_albumes = listar_albums(albumes, False)
+    return jsonify(dict_albumes)
+
+
+@APP.route('/list_albums_data', methods=['POST', 'GET'])
+def list_albums_data():
+    if request.method == "POST":
+        data = request.get_json()
+        album = data['album']
+    else:
+        album = int(request.args['album'])
+
+    try:
+        albumes = leer_todo(Album)
+    except (IntegrityError, OperationalError):
+        DB.session.rollback()
+        return "Error"
+
+    dict_albumes = listar_albums(albumes, False)
+    return jsonify(dict_albumes)
+
+
 @APP.route('/list_data', methods=['POST', 'GET'])
 def list_data():
     """
@@ -415,7 +463,11 @@ def delete_from_list():
     asociacion = [ass for ass in data_list.canciones if ass.canciones.id == data_cancion.id]
     if data_cancion is not None and data_list is not None and asociacion != []:
         try:
-            data_list.canciones.remove(asociacion)
+            DB.session.delete(asociacion[0])
+
+            for cancion in data_list.canciones:
+                if cancion.orden > asociacion[0].orden:
+                    cancion.orden -= 1
             DB.session.commit()
         except (IntegrityError, OperationalError):
             DB.session.rollback()
