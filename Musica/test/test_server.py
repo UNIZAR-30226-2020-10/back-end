@@ -161,7 +161,7 @@ def buscar_en_lista(tipo, obj):
         tipo = album
 
     status, res = curl(
-        'http://localhost:5000/search_in_list?Nombre=%s&Lista=%s' % (tipo.nombre, lista.id))
+        'http://localhost:5000/search_in_list?nombre=%s&lista=%s' % (tipo.nombre, lista.id))
 
     comprobar_json(obj, status, res, get_single_song_esperado(cancion))
 
@@ -216,7 +216,7 @@ class MyTestCase(unittest.TestCase):
         DB.session.add(lista)
         DB.session.commit()
 
-        status, res = curl('http://localhost:5000/list_data?list=%s' % lista.id)
+        status, res = curl('http://localhost:5000/list_data?lista=%s' % lista.id)
 
         res_esperado = {"ID": lista.id, "Nombre": lista.nombre,
                         "Imagen": lista.canciones[0].canciones.album.foto,
@@ -228,7 +228,7 @@ class MyTestCase(unittest.TestCase):
         delete_cancion_album(cancion, album)
 
     def test_crear_lista(self):
-        status, res = curl('http://localhost:5000/create_list?list=TEST_LIST&desc=TEST_DESC')
+        status, res = curl('http://localhost:5000/create_list?lista=TEST_LIST&desc=TEST_DESC')
         self.assertRegex(str(status), '2[0-9][0-9]', "Peticion no exitosa")
 
         self.assertNotEqual(res, "ERROR", "No se ha creado la lista")
@@ -241,7 +241,7 @@ class MyTestCase(unittest.TestCase):
         cancion, album, lista, aparicion = insertar_cancion_album_lista("Song1",
                                                                         "Album1")
 
-        status, res = curl('http://localhost:5000/delete_list?list=%d' % lista.id)
+        status, res = curl('http://localhost:5000/delete_list?lista=%d' % lista.id)
         self.assertRegex(str(status), '2[0-9][0-9]', "Peticion no exitosa")
 
         self.assertNotEqual(res, "ERROR", "No se ha eliminado la lista")
@@ -254,7 +254,7 @@ class MyTestCase(unittest.TestCase):
         DB.session.add(lista)
         DB.session.commit()
 
-        status, res = curl('http://localhost:5000/delete_list?list=%d' % lista.id)
+        status, res = curl('http://localhost:5000/delete_list?lista=%d' % lista.id)
         self.assertRegex(str(status), '2[0-9][0-9]', "Peticion no exitosa")
 
         self.assertNotEqual(res, "ERROR", "No se ha eliminado la lista")
@@ -267,7 +267,7 @@ class MyTestCase(unittest.TestCase):
         DB.session.commit()
 
         status, res = curl(
-            'http://localhost:5000/add_to_list?cancion=%d&list=%d' % (cancion.id, lista.id))
+            'http://localhost:5000/add_to_list?cancion=%d&lista=%d' % (cancion.id, lista.id))
         self.assertRegex(str(status), '2[0-9][0-9]', "Peticion no exitosa")
 
         self.assertEqual(res, "Success", "No se ha podido añadir")
@@ -280,27 +280,15 @@ class MyTestCase(unittest.TestCase):
 
     def test_search_song(self):
         cancion, album = insertar_cancion_album("Song1", "Album1")
-        cancion2 = insertar_cancion(cancion.nombre, album.nombre)
-        status, res = curl('http://localhost:5000/search?Nombre=%s' % cancion.nombre)
+        status, res = curl('http://localhost:5000/search?nombre=%s' % cancion.nombre)
 
-        res_esperado = [{"ID": cancion2.id, "Nombre": cancion2.nombre,
-                         "Artistas": cancion2.artistas,
-                         "URL": cancion2.path, "Imagen": cancion2.album.foto,
-                         "Album": cancion2.nombre_album},
-                        {"ID": cancion.id, "Nombre": cancion.nombre,
-                         "Artistas": cancion.artistas,
-                         "URL": cancion.path, "Imagen": cancion.album.foto,
-                         "Album": cancion.nombre_album}]
-
-        comprobar_json(self, status, res, res_esperado)
-
-        delete_cancion(cancion2)
+        comprobar_json(self, status, res, get_single_song_esperado(cancion))
         delete_cancion_album(cancion, album)
 
     def test_search_list(self):
         lista = insert_lista_test()
         lista2 = insert_lista_test()
-        status, res = curl('http://localhost:5000/search_list?Lista=%s' % lista.nombre)
+        status, res = curl('http://localhost:5000/search_list?lista=%s' % lista.nombre)
 
         res_esperado = [{"ID": lista.id, "Nombre": lista.nombre, "Imagen": "default",
                          "Desc": lista.descripcion},
@@ -314,7 +302,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_search_song_by_album(self):
         cancion, album = insertar_cancion_album("Song1", "Album1")
-        status, res = curl('http://localhost:5000/search?Nombre=%s' % album.nombre)
+        status, res = curl('http://localhost:5000/search?nombre=%s' % album.nombre)
 
         comprobar_json(self, status, res, get_single_song_esperado(cancion))
 
@@ -323,7 +311,7 @@ class MyTestCase(unittest.TestCase):
     def test_search_song_by_artist(self):
         cancion, album, artista = insertar_cancion_album_artista("Song1", "Album1", "Artista1")
 
-        status, res = curl('http://localhost:5000/search?Nombre=%s' % artista.nombre)
+        status, res = curl('http://localhost:5000/search?nombre=%s' % artista.nombre)
 
         comprobar_json(self, status, res, get_single_song_esperado(cancion))
 
@@ -341,7 +329,7 @@ class MyTestCase(unittest.TestCase):
                                                                                          "Album1",
                                                                                          "Artista1")
 
-        status, res = curl('http://localhost:5000/search_in_list?Nombre=%s&Lista=%s'
+        status, res = curl('http://localhost:5000/search_in_list?nombre=%s&lista=%s'
                            % (artista.nombre, lista.id))
 
         comprobar_json(self, status, res, get_single_song_esperado(cancion))
@@ -357,7 +345,7 @@ class MyTestCase(unittest.TestCase):
         categoria.canciones.append(cancion)
         DB.session.commit()
 
-        status, res = curl('http://localhost:5000/filter_category?Categorias=%s' % categoria.nombre)
+        status, res = curl('http://localhost:5000/filter_category?categorias=%s' % categoria.nombre)
 
         comprobar_json(self, status, res, get_single_song_esperado(cancion))
 
@@ -371,7 +359,7 @@ class MyTestCase(unittest.TestCase):
         categoria.canciones.append(cancion)
         DB.session.commit()
 
-        status, res = curl('http://localhost:5000/filter_category_in_list?Categorias=%s&Lista=%s' %
+        status, res = curl('http://localhost:5000/filter_category_in_list?categorias=%s&lista=%s' %
                            (categoria.nombre, lista.id))
 
         comprobar_json(self, status, res, get_single_song_esperado(cancion))
@@ -391,6 +379,4 @@ class MyTestCase(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    DB.drop_all()
-    DB.create_all()
     unittest.main()
