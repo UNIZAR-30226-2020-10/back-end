@@ -12,15 +12,22 @@ DB.create_all()
 
 
 def insert_to_list(lista, cancion):
-    lista.append(Aparicion(canciones=cancion, orden=len(lista)))
+    lista.append(Aparicion(cancion=cancion, orden=len(lista)))
 
 
-categorias = [
-    Categoria(nombre='Rock', descripcion='Categoria Rock'),
-    Categoria(nombre='Pop', descripcion='Categoria Pop'),
-    Categoria(nombre='EDM', descripcion='Categoria EDM'),
-    Categoria(nombre='Electronica', descripcion='Categoria Electronic'),
-    Categoria(nombre='Clasica', descripcion='Categoria Clasica'),
+albumes = [
+    Album(nombre='Album1', descripcion='album1', fecha=datetime.datetime(1990, 1, 1)),
+    Album(nombre='Album2', descripcion='album2', fecha=datetime.datetime(1991, 1, 2)),
+    Album(nombre='Album3', descripcion='album3', fecha=datetime.datetime(1992, 1, 1)),
+    Album(nombre='Album4', descripcion='album4', fecha=datetime.datetime(1993, 6, 1)),
+    Album(nombre='Album5', descripcion='album5', fecha=datetime.datetime(1994, 6, 1)),
+    Album(nombre='Album6', descripcion='album6', fecha=datetime.datetime(1995, 6, 1)),
+    Album(nombre='Album7', descripcion='album7', fecha=datetime.datetime(1996, 6, 1)),
+    Album(nombre='Album8', descripcion='album8', fecha=datetime.datetime(1997, 6, 1)),
+    Album(nombre='Album9', descripcion='album9', fecha=datetime.datetime(1998, 6, 1)),
+    Album(nombre='Album10', descripcion='album10', fecha=datetime.datetime(1999, 6, 1)),
+    Album(nombre='Album11', descripcion='album11', fecha=datetime.datetime(2000, 6, 1)),
+    Album(nombre='Album12', descripcion='album12', fecha=datetime.datetime(2001, 6, 1))
 ]
 
 artistas = [
@@ -40,9 +47,12 @@ artistas = [
     Artista(nombre='Johnning', fecha_nacimiento=datetime.datetime(1990, 1, 2))
 ]
 
-albumes = [
-    Album(nombre='Mi album 1', descripcion='album 1', fecha=datetime.datetime(2000, 6, 1)),
-    Album(nombre='Mi album 2', descripcion='album 2', fecha=datetime.datetime(2015, 6, 1))
+categorias = [
+    Categoria(nombre='Rock', descripcion='Categoria Rock'),
+    Categoria(nombre='Pop', descripcion='Categoria Pop'),
+    Categoria(nombre='EDM', descripcion='Categoria EDM'),
+    Categoria(nombre='Electronica', descripcion='Categoria Electronic'),
+    Categoria(nombre='Clasica', descripcion='Categoria Clasica'),
 ]
 
 listas = [
@@ -50,14 +60,15 @@ listas = [
     Lista(nombre='Gimnasio', descripcion='Canciones para entrenar en el gimnasio'),
     Lista(nombre='Mis favoritos', descripcion='Mis canciones favoritas'),
     Lista(nombre='Coche', descripcion='Canciones para escuchar en el coche')
-
 ]
 
 usuarios = [
-    Usuario(email='paco@gmail.com', nombre='Paco', password='passpaco',
-            fecha_nacimiento=datetime.datetime(2000, 1, 1), pais='Spain'),
-    Usuario(email='laura@gmail.com', nombre='Laura', password='passlaura',
-            fecha_nacimiento=datetime.datetime(2001, 1, 1), pais='France')
+    Usuario(email='elon@gmail.com', nombre='Elon Musk', password='passelon',
+            fecha_nacimiento=datetime.datetime(2000, 1, 1), pais='United States of America',
+            foto='https://psoftware.s3.amazonaws.com/usuario_elon-musk.jpeg'),
+    Usuario(email='karen@gmail.com', nombre='Karen Sparck Jones', password='passkaren',
+            fecha_nacimiento=datetime.datetime(2001, 1, 1), pais='United Kingdom',
+            foto='https://psoftware.s3.amazonaws.com/usuario_karen.png')
 ]
 
 solicitudes = [
@@ -103,13 +114,17 @@ canciones = [
 ]
 
 series_podcast = [
-    SeriePodcast(nombre='La vida moderna'),
-    SeriePodcast(nombre='Xataka')
+    SeriePodcast(nombre='SeriePodcast1'),
+    SeriePodcast(nombre='SeriePodcast2')
 ]
 
 capitulos_podcast = [
-    CapituloPodcast(nombre='Hemos vuelto'),
-    CapituloPodcast(nombre='Ciencia')
+    CapituloPodcast(nombre='CapituloPodcast1'),
+    CapituloPodcast(nombre='CapituloPodcast2')
+]
+
+listas_podcast = [
+    ListaPodcast(nombre='Favoritos')
 ]
 
 DB.session.add_all(categorias)
@@ -123,6 +138,7 @@ DB.session.add_all(canciones_compartidas)
 DB.session.add_all(canciones)
 DB.session.add_all(series_podcast)
 DB.session.add_all(capitulos_podcast)
+DB.session.add_all(listas_podcast)
 
 # Añadir relaciones
 
@@ -169,23 +185,18 @@ artistas[0].publicaciones.append(albumes[1])
 albumes[0].artistas.append(artistas[1])
 
 # Relacion aparece
-insert_to_list(listas[0].canciones, canciones[0])
-insert_to_list(listas[0].canciones, canciones[1])
-insert_to_list(listas[0].canciones, canciones[2])
-insert_to_list(listas[0].canciones, canciones[3])
-insert_to_list(listas[1].canciones, canciones[4])
-insert_to_list(listas[1].canciones, canciones[5])
-insert_to_list(listas[1].canciones, canciones[6])
-insert_to_list(listas[1].canciones, canciones[7])
-insert_to_list(listas[2].canciones, canciones[8])
-insert_to_list(listas[2].canciones, canciones[9])
-insert_to_list(listas[2].canciones, canciones[10])
-insert_to_list(listas[2].canciones, canciones[11])
-insert_to_list(listas[2].canciones, canciones[1])
-insert_to_list(listas[2].canciones, canciones[2])
-insert_to_list(listas[2].canciones, canciones[3])
-insert_to_list(listas[0].canciones, canciones[4])
-insert_to_list(listas[0].canciones, canciones[5])
+for i in range(len(canciones)):
+    insert_to_list(listas[0].apariciones, canciones[i])
+
+for i in range(4, 8):
+    insert_to_list(listas[1].apariciones, canciones[i])
+
+for i in range(8, 12):
+    insert_to_list(listas[2].apariciones, canciones[i])
+
+for i in range(4, 12):
+    insert_to_list(listas[3].apariciones, canciones[i])
+
 
 # Relacion amistad
 usuarios[0].amistades.append(usuarios[1])
@@ -194,6 +205,8 @@ usuarios[1].amistades.append(usuarios[0])
 # Relaciones 1:N
 
 # Relacion compuesto
+for i in range(len(canciones)):
+    canciones[i].album = albumes[i%len(albumes)]
 albumes[0].canciones.append(canciones[0])
 albumes[0].canciones.append(canciones[1])
 albumes[0].canciones.append(canciones[2])
@@ -210,7 +223,6 @@ albumes[1].canciones.append(canciones[11])
 # Relacion tiene
 usuarios[0].listas.append(listas[0])
 usuarios[1].listas.append(listas[1])
-listas[0].email_usuario = usuarios[0].email
 
 # Relacion compartida (lista)
 listas[1].comparticiones.append(listas_compartidas[0])
@@ -256,5 +268,12 @@ series_podcast[1].capitulos.append(capitulos_podcast[1])
 # Relacion escuchado
 usuarios[0].cap_escuchados.append(capitulos_podcast[0])
 capitulos_podcast[1].oyentes.append(usuarios[1])
+
+# Relacion compuesta
+listas_podcast[0].series_podcast.append(series_podcast[0])
+listas_podcast[0].series_podcast.append(series_podcast[1])
+
+# Relacion tiene
+usuarios[0].listas_podcast.append(listas_podcast[0])
 
 DB.session.commit()
