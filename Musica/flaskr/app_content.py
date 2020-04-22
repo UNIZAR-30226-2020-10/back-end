@@ -1,6 +1,6 @@
 """
 Autor: Saúl Flores Benavente
-Fecha-última_modificación: 08-04-2020
+Fecha-última_modificación: 22-04-2020
 Fichero que contiene la API de la aplicación TuneIT y sus funciones auxiliares
 """
 
@@ -48,28 +48,41 @@ def leer_datos(req, etiquetas):
     return datos
 
 
-def listar(tipo, tabla):
+def listar(tipo, tabla, usuario=None):
     """
     Lista los datos de tipo <tipo>
     Para cada tipo se llama a una funcion específica
+    :param usuario:
     :param tipo:
     :param tabla:
     :return:
     """
-    try:
-        dato = leer_todo(tabla)
-    except (IntegrityError, OperationalError):
-        DB.session.rollback()
-        return "Error"
 
     if tipo == "lista":
-        dict_songs = listar_listas(dato)
-    elif tipo == "artista":
-        dict_songs = listar_artistas(dato)
-    elif tipo == "album":
-        dict_songs = listar_albums(dato)
+        try:
+            dato = DB.session.query(Usuario).filter_by(email=usuario).first()
+        except (IntegrityError, OperationalError):
+            DB.session.rollback()
+            return "Error"
+
+        if dato is not None:
+            dict_songs = listar_listas(dato.listas)
+        else:
+            return "No existe el usuario"
+
     else:
-        dict_songs = listar_canciones(dato)
+        try:
+            dato = leer_todo(tabla)
+        except (IntegrityError, OperationalError):
+            DB.session.rollback()
+            return "Error"
+
+        if tipo == "artista":
+            dict_songs = listar_artistas(dato)
+        elif tipo == "album":
+            dict_songs = listar_albums(dato)
+        else:
+            dict_songs = listar_canciones(dato)
 
     return dict_songs
 
@@ -366,13 +379,15 @@ def search_in_list(lista, dato):
     return datos, True
 
 
-def search_lista(lista):
+def search_lista(lista, usuario):
     """
     Devuelve una lista de listas que contiene todas las listas de reproducción
+    :param usuario:
     :param lista:
     :return:
     """
-    datos = DB.session.query(Lista).filter(Lista.nombre.ilike('%' + lista + '%'))
+    datos = DB.session.query(Lista).filter(Lista.nombre.ilike('%' + lista + '%'),
+                                           Lista.email_usuario == usuario, Usuario.listas)
 
     return datos
 
@@ -392,9 +407,12 @@ def list_songs():
 def list_lists():
     """
     Lista en formato json las listas de reproducción y su información básica de la base de datos
+    Parametros de la peticion:
+        - usuario: usuario cuyas listas se van a mostrar
     :return:
     """
-    return jsonify(listar("lista", Lista))
+    usuario = leer_datos(request, ["usuario"])
+    return jsonify(listar("lista", Lista, usuario))
 
 
 @APP.route('/list_albums', methods=['POST', 'GET'])
@@ -459,12 +477,13 @@ def crear_lista():
     Parametros de la peticion:
         - lista
         - desc
+        - usuario
     :return:
     """
-    lista, desc = leer_datos(request, ["lista", "desc"])
+    lista, desc, usuario = leer_datos(request, ["lista", "desc", "usuario"])
 
     try:
-        element = Lista(nombre=lista, descripcion=desc)
+        element = Lista(nombre=lista, descripcion=desc, email_usuario=usuario)
         DB.session.add(element)
         DB.session.commit()
     except (IntegrityError, OperationalError):
@@ -595,8 +614,7 @@ def podcast_fav():
     serie = SeriePodcast(id=int(podcast), nombre=nombre, capitulos=[])
 
     try:
-        # lista = DB.session.query(ListaPodcast).filter_by(usuario=email).first()
-        lista = None
+        lista = DB.session.query(ListaPodcast).filter_by(usuario=email).first()
         if lista is not None:
             lista.podcast.append(serie)
         else:
@@ -609,12 +627,12 @@ def podcast_fav():
     return "Success"
 
 
-@APP.route('/podcast_fav', methods=['POST', 'GET'])
-def podcast_fav():
+@APP.route('/delete_podcast_fav', methods=['POST', 'GET'])
+def delete_podcast_fav():
     podcast, email = leer_datos(["podcast", "nombre"])
 
     try:
-        # lista = DB.session.query(ListaPodcast).filter_by(usuario=email).first()
+        lista = DB.session.query(ListaPodcast).filter_by(usuario=email).first()
         podcast = fetch_data_by_id(SeriePodcast, podcast)
 
         lista = None
@@ -640,8 +658,8 @@ def buscar_listas():
         - lista
     :return:
     """
-    lista = leer_datos(request, ["lista"])
-    listas = search_lista(lista)
+    lista, usuario = leer_datos(request, ["lista", "usuario"])
+    listas = search_lista(lista, usuario)
     result = listar_listas(listas)
     return jsonify(result)
 
