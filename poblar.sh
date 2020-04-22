@@ -14,7 +14,7 @@ development)
   ;;
 production)
   echo "Poblando en producción..."
-  heroku run python3 test/db_test.py --app psoftware
+  heroku run python3 test/db_test.py --app $app
   ;;
 *)
   echo "Usage: $(basename $0) <development|production>" && exit 1
