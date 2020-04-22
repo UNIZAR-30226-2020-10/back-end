@@ -1,6 +1,6 @@
 """
 Autor: Alberto Calvo Rubió
-Fecha-última_modificación: 08-04-2020
+Fecha-última_modificación: 22-04-2020
 Modulo principal de la aplicación
 """
 
@@ -109,7 +109,7 @@ class Album(DB.Model):
     nombre = DB.Column(DB.String(20), primary_key=True)
     descripcion = DB.Column(DB.String(100))
     fecha = DB.Column(DB.DateTime)
-    foto = DB.Column(DB.String(100))
+    foto = DB.Column(DB.String(100), default='https://psoftware.s3.amazonaws.com/album_defecto.jpg')
     canciones = DB.relationship('Cancion', backref='album')  # Relacion 'compuesto'
 
 
