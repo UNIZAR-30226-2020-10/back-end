@@ -76,8 +76,8 @@ def insertar_cancion_album_lista(nombre_cancion, nombre_album):
     cancion = insertar_cancion(nombre_cancion, album.nombre)
     lista, usuario = insert_lista_test()
 
-    aparicion = Aparicion(canciones=cancion, orden=len(lista.canciones))
-    lista.canciones.append(aparicion)
+    aparicion = Aparicion(cancion=cancion, orden=len(lista.apariciones))
+    lista.apariciones.append(aparicion)
     DB.session.add(lista)
     DB.session.commit()
 
@@ -101,8 +101,8 @@ def insertar_cancion_album_artista_lista(nombre_cancion, nombre_album, nombre_ar
                                                              nombre_artista)
     lista, usuario = insert_lista_test()
 
-    aparicion = Aparicion(canciones=cancion, orden=len(lista.canciones))
-    lista.canciones.append(aparicion)
+    aparicion = Aparicion(cancion=cancion, orden=len(lista.apariciones))
+    lista.apariciones.append(aparicion)
     DB.session.add(lista)
     DB.session.commit()
 
@@ -221,13 +221,13 @@ class MyTestCase(unittest.TestCase):
     def test_list_data(self):
         cancion, album = insertar_cancion_album("Song1", "Album1")
         lista, usuario = insert_lista_test()
-        aparicion = Aparicion(canciones=cancion, orden=len(lista.canciones))
-        lista.canciones.append(aparicion)
+        aparicion = Aparicion(cancion=cancion, orden=len(lista.apariciones))
+        lista.apariciones.append(aparicion)
         DB.session.add(lista)
         DB.session.commit()
 
         res_esperado = {"ID": lista.id, "Nombre": lista.nombre,
-                        "Imagen": lista.canciones[0].canciones.album.foto,
+                        "Imagen": lista.apariciones[0].cancion.album.foto,
                         "Desc": lista.descripcion,
                         "Canciones": get_single_song_esperado(cancion)}
         comprobar_json(self, 'http://localhost:5000/list_data?lista=%s' % lista.id, res_esperado)
@@ -280,8 +280,8 @@ class MyTestCase(unittest.TestCase):
 
         self.assertEqual(res, "Success", "No se ha podido añadir")
 
-        DB.session.delete(DB.session.query(Aparicion).filter_by(lista=lista.id,
-                                                                cancion=cancion.id).first())
+        DB.session.delete(DB.session.query(Aparicion).filter_by(id_lista=lista.id,
+                                                                id_cancion=cancion.id).first())
         delete([usuario, lista, cancion])
 
     def test_search_song(self):

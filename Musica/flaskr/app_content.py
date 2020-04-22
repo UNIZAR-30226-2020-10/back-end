@@ -8,7 +8,7 @@ from flask import request, jsonify, render_template
 from psycopg2.errors import UniqueViolation, InvalidDatetimeFormat
 from sqlalchemy.exc import DataError, OperationalError, IntegrityError
 from flaskr.db import APP, fetch_data_by_id, Lista, Cancion, DB, Categoria, Artista, leer_todo, \
-    Usuario, Aparicion, Album, SeriePodcast
+    Usuario, Aparicion, Album, SeriePodcast, ListaPodcast
 
 
 # pylint: disable=no-member
@@ -184,7 +184,7 @@ def listar_datos(tipo, tabla, dato):
         dict_res = listar_datos_artistas(res, True)
     else:
         try:
-            data = DB.session.query(Aparicion).filter_by(lista=dato).order_by(Aparicion.orden)
+            data = DB.session.query(Aparicion).filter_by(id_lista=dato).order_by(Aparicion.orden)
         except IntegrityError:
             DB.session.rollback()
             return "Error"
@@ -213,18 +213,18 @@ def listar_datos_lista(listas, canciones=None):
     # Canciones es una lista de las canciones ordenadas según el gusto del usuario
     if canciones is not None:
         if canciones:
-            dictionary["Canciones"] = listar_canciones([ass.canciones for ass in canciones])
-            dictionary["Imagen"] = canciones[0].canciones.album.foto
+            dictionary["Canciones"] = listar_canciones([ass.cancion for ass in canciones])
+            dictionary["Imagen"] = canciones[0].cancion.album.foto
         else:
             dictionary["Canciones"] = []
             dictionary["Imagen"] = "default"
 
     else:
-        if not listas.canciones:
+        if not listas.apariciones:
             dictionary["Imagen"] = "default"
         else:
             dictionary["Imagen"] = \
-                [ass.canciones.album.foto for ass in listas.canciones if ass.orden == 0][0]
+                [ass.cancion.album.foto for ass in listas.apariciones if ass.orden == 0][0]
 
     return dictionary
 
@@ -332,7 +332,7 @@ def buscar_categorias_list(lista, dato):
     datos = DB.session.query(Cancion) \
         .filter(Categoria.nombre.in_(dato), Categoria.canciones)
 
-    datos = [cancion for cancion in datos if cancion in [ass.canciones for ass in lista.canciones]]
+    datos = [cancion for cancion in datos if cancion in [ass.cancion for ass in lista.apariciones]]
     return datos, True
 
 
@@ -372,9 +372,9 @@ def search_in_list(lista, dato):
     artistas = DB.session.query(Cancion).filter(Artista.nombre.ilike('%' + dato + '%'),
                                                 Artista.composiciones).all()
 
-    datos = [ass.canciones for ass in lista.canciones if
-             (dato in ass.canciones.nombre) or (dato in ass.canciones.nombre_album) or (
-                     ass.canciones in artistas)]
+    datos = [ass.cancion for ass in lista.apariciones if
+             (dato in ass.cancion.nombre) or (dato in ass.cancion.nombre_album) or (
+                     ass.cancion in artistas)]
 
     return datos, True
 
@@ -527,8 +527,8 @@ def add_to_list():
     data_cancion, data_list, msg = obtain_song_list(int(lista), int(cancion))
     if data_cancion is not None and data_list is not None:
         try:
-            data_list.canciones.append(
-                Aparicion(canciones=data_cancion, orden=len(data_list.canciones)))
+            data_list.apariciones.append(
+                Aparicion(cancion=data_cancion, orden=len(data_list.apariciones)))
             DB.session.commit()
         except (IntegrityError, OperationalError):
             DB.session.rollback()
@@ -551,12 +551,12 @@ def delete_from_list():
     lista, cancion = leer_datos(request, ["lista", "cancion"])
 
     data_cancion, data_list, msg = obtain_song_list(int(lista), int(cancion))
-    asociacion = [ass for ass in data_list.canciones if ass.canciones.id == data_cancion.id]
+    asociacion = [ass for ass in data_list.apariciones if ass.cancion.id == data_cancion.id]
     if data_cancion is not None and data_list is not None and asociacion != []:
         try:
             DB.session.delete(asociacion[0])
 
-            for cancion in data_list.canciones:
+            for cancion in data_list.apariciones:
                 if cancion.orden > asociacion[0].orden:
                     cancion.orden -= 1
             DB.session.commit()
@@ -583,7 +583,7 @@ def reorder_list():
 
     before = int(before)
     after = int(after)
-    apariciones = DB.session.query(Aparicion).filter_by(lista=lista)
+    apariciones = DB.session.query(Aparicion).filter_by(id_lista=lista)
     if before > after:
         min_lim = after
         max_lim = before
@@ -609,18 +609,23 @@ def reorder_list():
 
 @APP.route('/podcast_fav', methods=['POST', 'GET'])
 def podcast_fav():
-    podcast, nombre, email = leer_datos(["podcast", "nombre", "email"])
+    podcast, nombre, email = leer_datos(request, ["podcast", "nombre", "email"])
 
-    serie = SeriePodcast(id=int(podcast), nombre=nombre, capitulos=[])
+    serie = fetch_data_by_id(SeriePodcast, podcast)
+    if serie == "error":
+        return "Error"
+
+    if serie is None:
+        serie = SeriePodcast(id=int(podcast), nombre=nombre, capitulos=[])
 
     try:
-        lista = DB.session.query(ListaPodcast).filter_by(usuario=email).first()
+        lista = DB.session.query(ListaPodcast).filter_by(email_usuario=email).first()
         if lista is not None:
-            lista.podcast.append(serie)
+            lista.series_podcast.append(serie)
         else:
             return "No existe"
 
-        DB.commit()
+        DB.session.commit()
     except (IntegrityError, OperationalError):
         return "Error"
 
@@ -629,20 +634,23 @@ def podcast_fav():
 
 @APP.route('/delete_podcast_fav', methods=['POST', 'GET'])
 def delete_podcast_fav():
-    podcast, email = leer_datos(["podcast", "nombre"])
+    podcast, email = leer_datos(request, ["podcast", "email"])
 
     try:
-        lista = DB.session.query(ListaPodcast).filter_by(usuario=email).first()
+        lista = DB.session.query(ListaPodcast).filter_by(email_usuario=email).first()
         podcast = fetch_data_by_id(SeriePodcast, podcast)
 
+        print(lista)
+        print(podcast)
+
         if lista is not None and podcast != "error":
-            lista.podcast.remove(podcast)
+            lista.series_podcast.remove(podcast)
         elif podcast == "error":
             return "No existe el podcast"
         else:
             return "No existe lista"
 
-        DB.commit()
+        DB.session.commit()
     except (IntegrityError, OperationalError):
         return "Error"
 
@@ -783,12 +791,10 @@ def registro():
 
     try:
         DB.session.add(user)
-        """
         DB.session.add(Lista(nombre="Favoritos", descripcion="Tus canciones favoritas",
                              email_usuario=user.email))
-        DB.session.add(ListaPodcast(nombre="Favoritos", descripcion="Tus canciones favoritas",
+        DB.session.add(ListaPodcast(nombre="Favoritos",
                                     email_usuario=user.email))
-        """
         DB.session.commit()
     except (IntegrityError, OperationalError) as error:
         DB.session.rollback()
