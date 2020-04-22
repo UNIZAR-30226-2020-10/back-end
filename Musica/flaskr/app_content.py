@@ -590,7 +590,7 @@ def reorder_list():
 
 @APP.route('/podcast_fav', methods=['POST', 'GET'])
 def podcast_fav():
-    podcast, nombre, email = leer_datos(["podcast", "nombre"])
+    podcast, nombre, email = leer_datos(["podcast", "nombre", "email"])
 
     serie = SeriePodcast(id=int(podcast), nombre=nombre, capitulos=[])
 
@@ -601,6 +601,29 @@ def podcast_fav():
             lista.podcast.append(serie)
         else:
             return "No existe"
+
+        DB.commit()
+    except (IntegrityError, OperationalError):
+        return "Error"
+
+    return "Success"
+
+
+@APP.route('/podcast_fav', methods=['POST', 'GET'])
+def podcast_fav():
+    podcast, email = leer_datos(["podcast", "nombre"])
+
+    try:
+        # lista = DB.session.query(ListaPodcast).filter_by(usuario=email).first()
+        podcast = fetch_data_by_id(SeriePodcast, podcast)
+
+        lista = None
+        if lista is not None and podcast != "error":
+            lista.podcast.remove(podcast)
+        elif podcast == "error":
+            return "No existe el podcast"
+        else:
+            return "No existe lista"
 
         DB.commit()
     except (IntegrityError, OperationalError):
