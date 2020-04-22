@@ -245,7 +245,7 @@ def listar_datos_albums(element, canciones=False):
     """
     dictionary = {"Nombre": element.nombre,
                   "Desc": element.descripcion,
-                  "fecha": element.fecha,
+                  "Imagen": element.foto,
                   "Artistas": [artista.nombre for artista in element.artistas]}
 
     if canciones:
@@ -430,7 +430,7 @@ def list_artist():
     Lista en formato json los artistas y su información básica de la base de datos
     :return:
     """
-    return jsonify(listar("artist", Artista))
+    return jsonify(listar("artista", Artista))
 
 
 @APP.route('/list_data', methods=['POST', 'GET'])
@@ -635,7 +635,6 @@ def delete_podcast_fav():
         lista = DB.session.query(ListaPodcast).filter_by(usuario=email).first()
         podcast = fetch_data_by_id(SeriePodcast, podcast)
 
-        lista = None
         if lista is not None and podcast != "error":
             lista.podcast.remove(podcast)
         elif podcast == "error":
