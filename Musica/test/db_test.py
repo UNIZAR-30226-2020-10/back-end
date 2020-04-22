@@ -12,7 +12,7 @@ DB.create_all()
 
 
 def insert_to_list(lista, cancion):
-    lista.append(Aparicion(canciones=cancion, orden=len(lista)))
+    lista.append(Aparicion(cancion=cancion, orden=len(lista)))
 
 
 categorias = [
@@ -103,13 +103,17 @@ canciones = [
 ]
 
 series_podcast = [
-    SeriePodcast(nombre='La vida moderna'),
-    SeriePodcast(nombre='Xataka')
+    SeriePodcast(nombre='SeriePodcast1'),
+    SeriePodcast(nombre='SeriePodcast2')
 ]
 
 capitulos_podcast = [
-    CapituloPodcast(nombre='Hemos vuelto'),
-    CapituloPodcast(nombre='Ciencia')
+    CapituloPodcast(nombre='CapituloPodcast1'),
+    CapituloPodcast(nombre='CapituloPodcast2')
+]
+
+listas_podcast = [
+    ListaPodcast(nombre='ListaPodcast')
 ]
 
 DB.session.add_all(categorias)
@@ -123,6 +127,7 @@ DB.session.add_all(canciones_compartidas)
 DB.session.add_all(canciones)
 DB.session.add_all(series_podcast)
 DB.session.add_all(capitulos_podcast)
+DB.session.add_all(listas_podcast)
 
 # Añadir relaciones
 
@@ -169,23 +174,23 @@ artistas[0].publicaciones.append(albumes[1])
 albumes[0].artistas.append(artistas[1])
 
 # Relacion aparece
-insert_to_list(listas[0].canciones, canciones[0])
-insert_to_list(listas[0].canciones, canciones[1])
-insert_to_list(listas[0].canciones, canciones[2])
-insert_to_list(listas[0].canciones, canciones[3])
-insert_to_list(listas[1].canciones, canciones[4])
-insert_to_list(listas[1].canciones, canciones[5])
-insert_to_list(listas[1].canciones, canciones[6])
-insert_to_list(listas[1].canciones, canciones[7])
-insert_to_list(listas[2].canciones, canciones[8])
-insert_to_list(listas[2].canciones, canciones[9])
-insert_to_list(listas[2].canciones, canciones[10])
-insert_to_list(listas[2].canciones, canciones[11])
-insert_to_list(listas[2].canciones, canciones[1])
-insert_to_list(listas[2].canciones, canciones[2])
-insert_to_list(listas[2].canciones, canciones[3])
-insert_to_list(listas[0].canciones, canciones[4])
-insert_to_list(listas[0].canciones, canciones[5])
+insert_to_list(listas[0].apariciones, canciones[0])
+insert_to_list(listas[0].apariciones, canciones[1])
+insert_to_list(listas[0].apariciones, canciones[2])
+insert_to_list(listas[0].apariciones, canciones[3])
+insert_to_list(listas[1].apariciones, canciones[4])
+insert_to_list(listas[1].apariciones, canciones[5])
+insert_to_list(listas[1].apariciones, canciones[6])
+insert_to_list(listas[1].apariciones, canciones[7])
+insert_to_list(listas[2].apariciones, canciones[8])
+insert_to_list(listas[2].apariciones, canciones[9])
+insert_to_list(listas[2].apariciones, canciones[10])
+insert_to_list(listas[2].apariciones, canciones[11])
+insert_to_list(listas[2].apariciones, canciones[1])
+insert_to_list(listas[2].apariciones, canciones[2])
+insert_to_list(listas[2].apariciones, canciones[3])
+insert_to_list(listas[0].apariciones, canciones[4])
+insert_to_list(listas[0].apariciones, canciones[5])
 
 # Relacion amistad
 usuarios[0].amistades.append(usuarios[1])
@@ -210,7 +215,6 @@ albumes[1].canciones.append(canciones[11])
 # Relacion tiene
 usuarios[0].listas.append(listas[0])
 usuarios[1].listas.append(listas[1])
-listas[0].email_usuario = usuarios[0].email
 
 # Relacion compartida (lista)
 listas[1].comparticiones.append(listas_compartidas[0])
@@ -257,4 +261,14 @@ series_podcast[1].capitulos.append(capitulos_podcast[1])
 usuarios[0].cap_escuchados.append(capitulos_podcast[0])
 capitulos_podcast[1].oyentes.append(usuarios[1])
 
+# Relacion compuesta
+listas_podcast[0].series_podcast.append(series_podcast[0])
+listas_podcast[0].series_podcast.append(series_podcast[1])
+
+# Relacion tiene
+usuarios[0].listas_podcast.append(listas_podcast[0])
+
 DB.session.commit()
+
+
+

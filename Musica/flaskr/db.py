@@ -72,13 +72,19 @@ cap_escuchado = DB.Table('cap_escuchado',
                          DB.Column('usuario', DB.String(25), DB.ForeignKey('usuario.email'))
                          )
 
+# Relacion 'aparece' de ListaPodcast y SeriePodcast
+aparicion_podcast = DB.Table('aparicion_podcast',
+                             DB.Column('serie_podcast', DB.Integer, DB.ForeignKey('serie_podcast.id')),
+                             DB.Column('lista_podcast', DB.Integer, DB.ForeignKey('lista_podcast.id'))
+                             )
+
 
 class Aparicion(DB.Model):
     __tablename__ = 'aparicion'
-    lista = DB.Column(DB.Integer, DB.ForeignKey('lista.id'), primary_key=True)
-    cancion = DB.Column(DB.Integer, DB.ForeignKey('cancion.id'), primary_key=True)
+    id_lista = DB.Column(DB.Integer, DB.ForeignKey('lista.id'), primary_key=True)
+    id_cancion = DB.Column(DB.Integer, DB.ForeignKey('cancion.id'), primary_key=True)
     orden = DB.Column(DB.Integer, nullable=False)
-    canciones = DB.relationship('Cancion', backref=DB.backref('apariciones'))
+    cancion = DB.relationship('Cancion', backref=DB.backref('apariciones'))
 
 
 class Categoria(DB.Model):
@@ -111,8 +117,8 @@ class Lista(DB.Model):
     id = DB.Column(DB.Integer, primary_key=True)
     nombre = DB.Column(DB.String(20), nullable=False)
     descripcion = DB.Column(DB.String(100))
-    canciones = DB.relationship('Aparicion', cascade="delete")
-    email_usuario = DB.Column(DB.String(25), DB.ForeignKey('usuario.email'))
+    apariciones = DB.relationship('Aparicion', cascade="delete")
+    email_usuario = DB.Column(DB.String(25), DB.ForeignKey('usuario.email'))  # Relacion 'tiene' de usuario
     comparticiones = DB.relationship('ListaCompartida', backref='lista')  # Relacion 'compartida'
 
 
@@ -128,7 +134,8 @@ class Usuario(DB.Model):
     amistades = DB.relationship('Usuario', secondary='amistad',
                                 primaryjoin=email == amistad.c.usuario1,
                                 secondaryjoin=amistad.c.usuario2 == email)
-    listas = DB.relationship('Lista', backref='usuario')  # Relacion 'tiene'
+    listas = DB.relationship('Lista', backref='usuario')  # Relacion 'tiene' de canciones
+    listas_podcast = DB.relationship('ListaPodcast', backref='usuario')  # Relacion 'tiene' de podcast
     id_ultima_cancion = DB.Column(DB.Integer, DB.ForeignKey('cancion.id'))
     segundo_ultima_cancion = DB.Column(DB.Integer)
 
@@ -205,6 +212,14 @@ class CapituloPodcast(DB.Model):
     id = DB.Column(DB.Integer, primary_key=True)
     nombre = DB.Column(DB.String(50))
     id_serie = DB.Column(DB.Integer, DB.ForeignKey('serie_podcast.id'))
+
+
+class ListaPodcast(DB.Model):
+    id = DB.Column(DB.Integer, primary_key=True)
+    nombre = DB.Column(DB.String(50))
+    email_usuario = DB.Column(DB.String(25), DB.ForeignKey('usuario.email'))  # Relacion 'tiene' de usuario
+    series_podcast = DB.relationship('SeriePodcast', secondary=aparicion_podcast,
+                                     backref=DB.backref('lista_podcast'))
 
 
 DB.create_all()
