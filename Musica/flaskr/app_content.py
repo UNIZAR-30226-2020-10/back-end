@@ -8,7 +8,7 @@ from flask import request, jsonify, render_template
 from psycopg2.errors import UniqueViolation, InvalidDatetimeFormat
 from sqlalchemy.exc import DataError, OperationalError, IntegrityError
 from flaskr.db import APP, fetch_data_by_id, Lista, Cancion, DB, Categoria, Artista, leer_todo, \
-    Usuario, Aparicion, Album
+    Usuario, Aparicion, Album, SeriePodcast
 
 
 # pylint: disable=no-member
@@ -588,6 +588,27 @@ def reorder_list():
     return "Success"
 
 
+@APP.route('/podcast_fav', methods=['POST', 'GET'])
+def podcast_fav():
+    podcast, nombre, email = leer_datos(["podcast", "nombre"])
+
+    serie = SeriePodcast(id=int(podcast), nombre=nombre, capitulos=[])
+
+    try:
+        # lista = DB.session.query(ListaPodcast).filter_by(usuario=email).first()
+        lista = None
+        if lista is not None:
+            lista.podcast.append(serie)
+        else:
+            return "No existe"
+
+        DB.commit()
+    except (IntegrityError, OperationalError):
+        return "Error"
+
+    return "Success"
+
+
 @APP.route('/search_list', methods=['POST', 'GET'])
 def buscar_listas():
     """
@@ -722,6 +743,12 @@ def registro():
 
     try:
         DB.session.add(user)
+        """
+        DB.session.add(Lista(nombre="Favoritos", descripcion="Tus canciones favoritas",
+                             email_usuario=user.email))
+        DB.session.add(ListaPodcast(nombre="Favoritos", descripcion="Tus canciones favoritas",
+                                    email_usuario=user.email))
+        """
         DB.session.commit()
     except (IntegrityError, OperationalError) as error:
         DB.session.rollback()

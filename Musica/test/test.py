@@ -8,3 +8,6 @@ loader = unittest.TestLoader()
 tests = loader.discover(".")
 testRunner = unittest.runner.TextTestRunner()
 testRunner.run(tests)
+
+DB.drop_all()
+DB.create_all()

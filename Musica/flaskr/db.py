@@ -59,14 +59,7 @@ publicacion = DB.Table('publicacion',
                        DB.Column('artista', DB.String(20), DB.ForeignKey('artista.nombre')),
                        DB.Column('album', DB.String(20), DB.ForeignKey('album.nombre'))
                        )
-"""
-# Relacion 'aparece'
-aparicion = DB.Table('aparicion',
-                     DB.Column('lista', DB.Integer, DB.ForeignKey('lista.id')),
-                     DB.Column('cancion', DB.Integer, DB.ForeignKey('cancion.id')),
-                     DB.Column('orden', DB.Integer, nullable=False)
-                     )
-"""
+
 # Relacion 'conoce'
 amistad = DB.Table('amistad',
                    DB.Column('usuario1', DB.String(25), DB.ForeignKey('usuario.email')),
@@ -164,7 +157,8 @@ class Usuario(DB.Model):
                                           foreign_keys="CancionCompartida.email_usuario_notificado")
 
     # Relacion 'escuchado'
-    cap_escuchados = DB.relationship('CapituloPodcast', secondary=cap_escuchado, backref=DB.backref('oyentes'))
+    cap_escuchados = DB.relationship('CapituloPodcast', secondary=cap_escuchado,
+                                     backref=DB.backref('oyentes'))
 
 
 class Solicitud(DB.Model):
