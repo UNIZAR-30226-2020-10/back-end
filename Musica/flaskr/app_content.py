@@ -635,7 +635,6 @@ def delete_podcast_fav():
         lista = DB.session.query(ListaPodcast).filter_by(usuario=email).first()
         podcast = fetch_data_by_id(SeriePodcast, podcast)
 
-        lista = None
         if lista is not None and podcast != "error":
             lista.podcast.remove(podcast)
         elif podcast == "error":
