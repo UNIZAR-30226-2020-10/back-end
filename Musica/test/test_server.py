@@ -3,8 +3,10 @@ import unittest
 import pycurl as p
 import io
 
+from flask import jsonify
+
 from flaskr.db import *
-from sqlalchemy.sql import func
+
 
 def curl(url):
     c = p.Curl()
@@ -167,8 +169,10 @@ def get_single_song_esperado(cancion):
 
 
 def get_single_album_esperado(album):
+
     return [{"Nombre": album.nombre,
              "Artistas": [artista.nombre for artista in album.artistas],
+             "fecha": album.fecha.strftime("%A, %d %b %Y"),
              "Desc": album.descripcion, "Imagen": album.foto}]
 
 

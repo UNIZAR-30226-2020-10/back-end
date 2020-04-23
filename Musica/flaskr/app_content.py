@@ -246,6 +246,7 @@ def listar_datos_albums(element, canciones=False):
     dictionary = {"Nombre": element.nombre,
                   "Desc": element.descripcion,
                   "Imagen": element.foto,
+                  "fecha": element.fecha.strftime("%A, %d %b %Y"),
                   "Artistas": [artista.nombre for artista in element.artistas]}
 
     if canciones:
