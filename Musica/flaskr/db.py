@@ -78,6 +78,12 @@ aparicion_podcast = DB.Table('aparicion_podcast',
                              DB.Column('lista_podcast', DB.Integer, DB.ForeignKey('lista_podcast.id'))
                              )
 
+# Relacion 'suscrito'
+suscripcion = DB.Table('suscripcion',
+                       DB.Column('usuario', DB.String(25), DB.ForeignKey('usuario.email')),
+                       DB.Column('artista', DB.String(20), DB.ForeignKey('artista.nombre'))
+                       )
+
 
 class Aparicion(DB.Model):
     __tablename__ = 'aparicion'
@@ -166,6 +172,9 @@ class Usuario(DB.Model):
     # Relacion 'escuchado'
     cap_escuchados = DB.relationship('CapituloPodcast', secondary=cap_escuchado,
                                      backref=DB.backref('oyentes'))
+
+    # Relacion 'suscrito'
+    artistas = DB.relationship('Artista', secondary=suscripcion, backref=DB.backref('suscriptores'))
 
 
 class Solicitud(DB.Model):
