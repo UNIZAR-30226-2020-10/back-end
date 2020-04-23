@@ -1,6 +1,6 @@
 """
 Autor: Saúl Flores Benavente
-Fecha-última_modificación: 22-04-2020
+Fecha-última_modificación: 23-04-2020
 Fichero que contiene la API de la aplicación TuneIT y sus funciones auxiliares
 """
 
@@ -66,7 +66,7 @@ def listar(tipo, tabla, usuario=None):
             return "Error"
 
         if dato is not None:
-            dict_songs = listar_listas(dato.listas)
+            dictionary = listar_listas(dato.listas)
         else:
             return "No existe el usuario"
 
@@ -78,13 +78,13 @@ def listar(tipo, tabla, usuario=None):
             return "Error"
 
         if tipo == "artista":
-            dict_songs = listar_artistas(dato)
+            dictionary = listar_artistas(dato)
         elif tipo == "album":
-            dict_songs = listar_albums(dato)
+            dictionary = listar_albums(dato)
         else:
-            dict_songs = listar_canciones(dato)
+            dictionary = listar_canciones(dato)
 
-    return dict_songs
+    return dictionary
 
 
 def listar_canciones(canciones):
@@ -169,6 +169,8 @@ def listar_datos(tipo, tabla, dato):
     try:
         if tipo == "album" or tipo == "artista":
             res = DB.session.query(tabla).filter_by(nombre=dato).first()
+        elif tipo == "usuario":
+            res = get_user(dato)
         else:
             res = DB.session.query(tabla).filter_by(id=int(dato)).first()
     except (IntegrityError, OperationalError):
@@ -182,6 +184,8 @@ def listar_datos(tipo, tabla, dato):
         dict_res = listar_datos_albums(res, True)
     elif tipo == "artista":
         dict_res = listar_datos_artistas(res, True)
+    elif tipo == "usuario":
+        dict_res = listar_datos_usuario(res)
     else:
         try:
             data = DB.session.query(Aparicion).filter_by(id_lista=dato).order_by(Aparicion.orden)
@@ -272,6 +276,28 @@ def listar_datos_artistas(artista, datos=False):
 
     if datos:
         dicty["Albumes"] = listar_albums(artista.publicaciones)
+
+    return dicty
+
+
+def listar_datos_usuario(usuario):
+    """
+    Formatea un usuario como un diccionario
+    Auxiliar para transformar los datos en formato compatible con json
+    El diccionario contiene:
+        - Nombre
+        - Contraseña
+        - Fecha
+        - Pais
+        - Foto
+    :param usuario:
+    :return:
+    """
+    dicty = {"Nombre": usuario.nombre,
+             "Password": usuario.password,
+             "fecha": usuario.fecha_nacimiento.strftime("%A, %d %b %Y"),
+             "Pais": usuario.pais,
+             "Foto": usuario.foto}
 
     return dicty
 
@@ -395,7 +421,7 @@ def search_lista(lista, usuario):
 
 # -------------------------------------------------------------------------------------------------
 
-@APP.route('/list', methods=['POST', 'GET'])
+@APP.route('/list', methods=['POST', 'GET'])  # Test DONE
 def list_songs():
     """
     Lista en formato json las canciones presentes en la base de datos y su información básica
@@ -404,7 +430,7 @@ def list_songs():
     return jsonify(listar("cancion", Cancion))
 
 
-@APP.route('/list_lists', methods=['POST', 'GET'])
+@APP.route('/list_lists', methods=['POST', 'GET'])  # Test DONE
 def list_lists():
     """
     Lista en formato json las listas de reproducción y su información básica de la base de datos
@@ -416,7 +442,7 @@ def list_lists():
     return jsonify(listar("lista", Lista, usuario))
 
 
-@APP.route('/list_albums', methods=['POST', 'GET'])
+@APP.route('/list_albums', methods=['POST', 'GET'])  # Test DONE
 def list_albums():
     """
     Lista en formato json los álbumes y su información básica de la base de datos
@@ -425,7 +451,7 @@ def list_albums():
     return jsonify(listar("album", Album))
 
 
-@APP.route('/list_artists', methods=['POST', 'GET'])
+@APP.route('/list_artists', methods=['POST', 'GET'])  # Test DONE
 def list_artist():
     """
     Lista en formato json los artistas y su información básica de la base de datos
@@ -434,7 +460,7 @@ def list_artist():
     return jsonify(listar("artista", Artista))
 
 
-@APP.route('/list_data', methods=['POST', 'GET'])
+@APP.route('/list_data', methods=['POST', 'GET'])  # Test DONE
 def list_data_list():
     """
     Lista en formato json la información de una lista de reproducción incluyendo las canciones
@@ -471,7 +497,7 @@ def list_artist_data():
     return jsonify(listar_datos("artista", Artista, artista))
 
 
-@APP.route('/create_list', methods=['POST', 'GET'])
+@APP.route('/create_list', methods=['POST', 'GET'])  # Test DONE
 def crear_lista():
     """
     Crea una lista de reproducción con la información proporcionada en la petición
@@ -493,7 +519,7 @@ def crear_lista():
         return "Success"
 
 
-@APP.route('/delete_list', methods=['POST', 'GET'])
+@APP.route('/delete_list', methods=['POST', 'GET'])  # Test DONE
 def delete_lista():
     """
     Borra la lista de reproducción especificada
@@ -514,7 +540,7 @@ def delete_lista():
         return "Success"
 
 
-@APP.route('/add_to_list', methods=['POST', 'GET'])
+@APP.route('/add_to_list', methods=['POST', 'GET'])  # Test DONE
 def add_to_list():
     """
     Añade la canción especificada a la lista de reproducción especificada
@@ -540,7 +566,7 @@ def add_to_list():
         return msg
 
 
-@APP.route('/delete_from_list', methods=['POST', 'GET'])
+@APP.route('/delete_from_list', methods=['POST', 'GET'])  # Test DONE
 def delete_from_list():
     """
     Borra la canción especificada de la lista de reproducción especificada
@@ -658,7 +684,7 @@ def delete_podcast_fav():
     return "Success"
 
 
-@APP.route('/search_list', methods=['POST', 'GET'])
+@APP.route('/search_list', methods=['POST', 'GET'])  # Test DONE
 def buscar_listas():
     """
     Busca una lista de reproducción en la base de datos
@@ -672,7 +698,7 @@ def buscar_listas():
     return jsonify(result)
 
 
-@APP.route('/search', methods=['POST', 'GET'])
+@APP.route('/search', methods=['POST', 'GET'])  # Test DONE
 def buscar_general():
     """
     Devuelve en formato json los resultados de la busqueda de canciones por autor, artistas y albúm
@@ -686,7 +712,7 @@ def buscar_general():
     return jsonify(res)
 
 
-@APP.route('/search_in_list', methods=['POST', 'GET'])
+@APP.route('/search_in_list', methods=['POST', 'GET'])  # Test DONE
 def buscar_general_lista():
     """
     Devuelve en formato json los resultados de la busqueda de canciones por autor, artistas y
@@ -705,7 +731,7 @@ def buscar_general_lista():
     return jsonify(res)
 
 
-@APP.route('/filter_category', methods=['POST', 'GET'])
+@APP.route('/filter_category', methods=['POST', 'GET'])  # Test DONE
 def filter_category():
     """
     Devuelve una lista de canciones pertenecientes a las categorias en el filtro
@@ -719,7 +745,7 @@ def filter_category():
     return jsonify(result)
 
 
-@APP.route('/filter_category_in_list', methods=['POST', 'GET'])
+@APP.route('/filter_category_in_list', methods=['POST', 'GET'])  # Test DONE
 def filter_category_list():
     """
     Devuelve una lista de canciones pertenecientes a las categorias en el filtro y a la lista de
@@ -738,7 +764,7 @@ def filter_category_list():
     return jsonify(result)
 
 
-@APP.route('/test', methods=['POST', 'GET'])
+@APP.route('/test', methods=['POST', 'GET'])  # Test DONE
 def test():
     """
     Test para mostrar que el servidor responde peticiones
@@ -761,15 +787,25 @@ def autentificacion(email, password):
     :return:
     """
     try:
-        user = DB.session.query(Usuario).filter_by(email=email).first()
+        user = get_user(email)
     except (IntegrityError, OperationalError):
         DB.session.rollback()
         return False, "Error", None
 
-    if not user:
+    if user is None:
         return False, "No user", None
 
     return user.password == password, "Contraseña incorrecta", user
+
+
+def get_user(email):
+    """
+    Hace una query a la base de datos para buscar el usuario especificado
+    :param email:
+    :return:
+    """
+    user = DB.session.query(Usuario).filter_by(email=email).first()
+    return user
 
 
 @APP.route('/register', methods=['POST', 'GET'])
@@ -857,3 +893,16 @@ def inicio_sesion():
             return "Error"
     else:
         return msg
+
+
+@APP.route('/info_usuario', methods=['POST', 'GET'])
+def info_usuario():
+    """
+    Devuelve la información básica de un usuario
+    Parametros de la peticion:
+        - email
+    :return:
+    """
+    email = leer_datos(request, ["email"])
+
+    return jsonify(listar_datos("usuario", Usuario, email))

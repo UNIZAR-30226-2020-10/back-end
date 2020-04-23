@@ -3,8 +3,6 @@ import unittest
 import pycurl as p
 import io
 
-from flask import jsonify
-
 from flaskr.db import *
 
 
@@ -182,6 +180,11 @@ def get_single_artist_esperado(artista):
 
 
 class MyTestCase(unittest.TestCase):
+    """
+    Tests unitarios de la aplicacion TuneIt
+    Se prueban las distintas peticiones para comprobar su fucnionamiento
+    Test pendientes en comentarios
+    """
 
     def test_server(self):
         status, res = curl('http://localhost:5000/test?test=Success')
@@ -238,6 +241,10 @@ class MyTestCase(unittest.TestCase):
 
         delete([usuario, lista, cancion, album])
 
+    # Test list_albums_data
+
+    # Test list_artists_data
+
     def test_crear_lista(self):
         usuario = insertar_usuario()
 
@@ -287,6 +294,24 @@ class MyTestCase(unittest.TestCase):
         DB.session.delete(DB.session.query(Aparicion).filter_by(id_lista=lista.id,
                                                                 id_cancion=cancion.id).first())
         delete([usuario, lista, cancion])
+
+    def test_delete_from_list(self):
+        cancion, album, lista, aparicion, usuario = insertar_cancion_album_lista("Song1", "Album1")
+        status, res = curl('http://localhost:5000/delete_from_list?cancion=%d&lista=%d' %
+                           (cancion.id,
+                            lista.id))
+
+        self.assertRegex(str(status), '2[0-9][0-9]', "Peticion no exitosa")
+
+        self.assertEqual(res, "Success", "No se ha podido añadir")
+
+        delete([usuario, album, lista, cancion])
+
+    # Test reorder
+
+    # Test podcast_fav
+
+    # Test delete_podcast_fav
 
     def test_search_song(self):
         cancion, album = insertar_cancion_album("Song1", "Album1")
@@ -364,14 +389,13 @@ class MyTestCase(unittest.TestCase):
 
         delete([usuario, categoria, lista, cancion, album])
 
-    # Test complementarios a implementar:
-    #   Crear una lista de reproduccion - Done
-    #   Añadir una cancion - Done
-    #   Listar datos de una cancion
-    #   Eliminar cancion de la lista - Done
-    #   Eliminar lista - Done
-    #   Listar Canciones de una lista
-    #   Busquedas
+    # Test inicio_sesion
+
+    # Test registro
+
+    # Test eliminar usuario
+
+    # Test info_usuario
 
 
 if __name__ == '__main__':

@@ -135,7 +135,8 @@ class Usuario(DB.Model):
                                 primaryjoin=email == amistad.c.usuario1,
                                 secondaryjoin=amistad.c.usuario2 == email)
     listas = DB.relationship('Lista', backref='usuario')  # Relacion 'tiene' de canciones
-    listas_podcast = DB.relationship('ListaPodcast', backref='usuario')  # Relacion 'tiene' de podcast
+    # Relacion 'tiene' de podcast
+    listas_podcast = DB.relationship('ListaPodcast', backref='usuario')
     id_ultima_cancion = DB.Column(DB.Integer, DB.ForeignKey('cancion.id'))
     segundo_ultima_cancion = DB.Column(DB.Integer)
 
