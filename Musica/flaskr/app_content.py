@@ -3,6 +3,7 @@ Autor: Saúl Flores Benavente
 Fecha-última_modificación: 23-04-2020
 Fichero que contiene la API de la aplicación TuneIT y sus funciones auxiliares
 """
+import datetime
 
 from flask import request, jsonify, render_template
 from psycopg2.errors import UniqueViolation, InvalidDatetimeFormat
@@ -906,3 +907,46 @@ def info_usuario():
     email = leer_datos(request, ["email"])
 
     return jsonify(listar_datos("usuario", Usuario, email))
+
+
+@APP.route('/modify', methods=['POST', 'GET'])
+def modificar_perfil():
+    etiquetas = []
+    if request.method == 'POST':
+        datos = request.get_json()
+        for element in datos:
+            etiquetas.append(element)
+    else:
+        datos = request.args
+        for element in request.args:
+            etiquetas.append(element)
+
+    try:
+        usuario = get_user(datos["email"])
+
+        if usuario is None:
+            return "No existe usuario"
+
+        if "password" in etiquetas:
+            usuario.password = datos["password"]
+
+        if "fecha" in etiquetas:
+            lista = datos["fecha"].replace("-", "/").split("/", 3)
+            usuario.fecha_nacimiento = datetime.date(int(lista[2]), int(lista[0]), int(lista[1]))
+
+        if "nombre" in etiquetas:
+            usuario.nombre = datos["nombre"]
+
+        if "pais" in etiquetas:
+            usuario.pais = datos["pais"]
+
+        DB.session.commit()
+
+        return "Success"
+
+    except (IntegrityError, OperationalError, DataError) as error:
+        DB.session.rollback()
+        print(error)
+        if isinstance(error.orig, InvalidDatetimeFormat):
+            return "Fecha incorrecta"
+        return "Error"
