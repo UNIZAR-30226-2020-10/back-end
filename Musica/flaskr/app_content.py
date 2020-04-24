@@ -59,17 +59,25 @@ def listar(tipo, tabla, usuario=None):
     :return:
     """
 
-    if tipo == "lista":
+    if usuario is not None:
         try:
             dato = DB.session.query(Usuario).filter_by(email=usuario).first()
         except (IntegrityError, OperationalError):
             DB.session.rollback()
             return "Error"
 
-        if dato is not None:
+        if dato is None:
+            return "No existe el usuario"
             dictionary = listar_listas(dato.listas)
         else:
-            return "No existe el usuario"
+
+            if tipo == "podcast":
+                if dato.listas_podcast:
+                    dictionary = listar_podcast(dato.listas_podcast[0].series_podcast)
+                else:
+                    dictionary = []
+            else:
+                dictionary = listar_listas(dato.listas)
 
     else:
         try:
@@ -156,6 +164,14 @@ def listar_artistas(artistas):
         dictionary.append(listar_datos_artistas(artista))
 
     return dictionary
+
+
+def listar_podcast(lista):
+    podcast = []
+    for element in lista:
+        podcast.append(element.id)
+
+    return podcast
 
 
 def listar_datos(tipo, tabla, dato):
@@ -442,7 +458,7 @@ def list_lists():
     :return:
     """
     usuario = leer_datos(request, ["usuario"])
-    return jsonify(listar("lista", Lista, usuario))
+    return jsonify(listar("lista", None, usuario))
 
 
 @APP.route('/list_albums', methods=['POST', 'GET'])  # Test DONE
@@ -461,6 +477,16 @@ def list_artist():
     :return:
     """
     return jsonify(listar("artista", Artista))
+
+
+@APP.route('/list_podcast', methods=['POST', 'GET'])
+def list_podcast():
+    """
+    Lista en formato json los podcast favoritos de un usuario
+    :return:
+    """
+    usuario = leer_datos(request, ["email"])
+    return jsonify(listar("podcast", None, usuario))
 
 
 @APP.route('/list_data', methods=['POST', 'GET'])  # Test DONE
@@ -639,6 +665,16 @@ def reorder_list():
 
 @APP.route('/podcast_fav', methods=['POST', 'GET'])
 def podcast_fav():
+    """
+    Añade un podcast a la lista de podcast favoritos de un usuario
+    Si el podcast esta en la bd solo lo añade a la lista, si no esta, se añade el podcast a la
+    base de datos
+    Parametros de la petición:
+        - email
+        - podcast
+        - nombre
+    :return:
+    """
     podcast, nombre, email = leer_datos(request, ["podcast", "nombre", "email"])
 
     serie = fetch_data_by_id(SeriePodcast, podcast)
@@ -664,14 +700,18 @@ def podcast_fav():
 
 @APP.route('/delete_podcast_fav', methods=['POST', 'GET'])
 def delete_podcast_fav():
+    """
+    Elimina un podcast de la lista de favoritos de un usuario
+    Parametros de la petición:
+        - email
+        - podcast
+    :return:
+    """
     podcast, email = leer_datos(request, ["podcast", "email"])
 
     try:
         lista = DB.session.query(ListaPodcast).filter_by(email_usuario=email).first()
         podcast = fetch_data_by_id(SeriePodcast, podcast)
-
-        print(lista)
-        print(podcast)
 
         if lista is not None and podcast != "error":
             lista.series_podcast.remove(podcast)
@@ -685,6 +725,29 @@ def delete_podcast_fav():
         return "Error"
 
     return "Success"
+
+
+@APP.route('/podcast_is_fav', methods=['POST', 'GET'])
+def podcast_is_fav():
+    """
+    Devuelve "true" si el podcast esta en la lista de favoritos del usuario especificado y false
+    en caso contrario.
+    Parametros de la petición:
+        - email
+        - podcast
+    :return:
+    """
+    podcast, usuario = leer_datos(request, ["podcast", "email"])
+
+    try:
+        existe = DB.session.query(SeriePodcast).filter(SeriePodcast.id == int(podcast),
+                                                       Usuario.listas_podcast,
+                                                       ListaPodcast.series_podcast,
+                                                       Usuario.email == usuario).first()
+        return jsonify(existe is not None)
+    except (IntegrityError, OperationalError):
+        DB.session.rollback()
+        return "Error"
 
 
 @APP.route('/search_list', methods=['POST', 'GET'])  # Test DONE
@@ -913,6 +976,16 @@ def info_usuario():
 
 @APP.route('/modify', methods=['POST', 'GET'])
 def modificar_perfil():
+    """
+    Modifica los datos de un usuario a partir de los datos recibidos en la peticion.
+    Parametros de la peticion:
+        - email: email del usuario OBLIGATORIO
+        - password: NO OBLIGATORIO
+        - fecha: formato MM(/ | -)DD(/ | -)AAAA NO OBLIGATORIO
+        - nombre: NO OBLIGATORIO
+        - pais: NO OBLIGATORIO
+    :return:
+    """
     etiquetas = []
     if request.method == 'POST':
         datos = request.get_json()
