@@ -189,7 +189,8 @@ def listar_datos(tipo, tabla, dato):
         dict_res = listar_datos_usuario(res)
     else:
         try:
-            data = DB.session.query(Aparicion).filter_by(id_lista=dato).order_by(Aparicion.orden)
+            data = DB.session.query(Aparicion).filter_by(id_lista=dato).order_by(
+                Aparicion.orden).all()
         except IntegrityError:
             DB.session.rollback()
             return "Error"
@@ -217,6 +218,7 @@ def listar_datos_lista(listas, canciones=None):
 
     # Canciones es una lista de las canciones ordenadas según el gusto del usuario
     if canciones is not None:
+        print(canciones)
         if canciones:
             dictionary["Canciones"] = listar_canciones([ass.cancion for ass in canciones])
             dictionary["Imagen"] = canciones[0].cancion.album.foto
