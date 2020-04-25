@@ -740,7 +740,7 @@ def podcast_is_fav():
     podcast, usuario = leer_datos(request, ["podcast", "email"])
 
     try:
-        existe = DB.session.query(SeriePodcast).filter(SeriePodcast.id == int(podcast),
+        existe = DB.session.query(SeriePodcast).filter(SeriePodcast.id == podcast,
                                                        Usuario.listas_podcast,
                                                        ListaPodcast.series_podcast,
                                                        Usuario.email == usuario).first()

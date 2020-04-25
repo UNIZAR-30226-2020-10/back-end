@@ -68,14 +68,16 @@ amistad = DB.Table('amistad',
 
 # Relacion 'escuchado'
 cap_escuchado = DB.Table('cap_escuchado',
-                         DB.Column('capitulo', DB.Integer, DB.ForeignKey('capitulo_podcast.id')),
+                         DB.Column('capitulo', DB.String(50), DB.ForeignKey('capitulo_podcast.id')),
                          DB.Column('usuario', DB.String(25), DB.ForeignKey('usuario.email'))
                          )
 
 # Relacion 'aparece' de ListaPodcast y SeriePodcast
 aparicion_podcast = DB.Table('aparicion_podcast',
-                             DB.Column('serie_podcast', DB.Integer, DB.ForeignKey('serie_podcast.id')),
-                             DB.Column('lista_podcast', DB.Integer, DB.ForeignKey('lista_podcast.id'))
+                             DB.Column('serie_podcast', DB.String(50),
+                                       DB.ForeignKey('serie_podcast.id')),
+                             DB.Column('lista_podcast', DB.Integer,
+                                       DB.ForeignKey('lista_podcast.id'))
                              )
 
 
@@ -204,15 +206,15 @@ class Cancion(DB.Model):
 
 
 class SeriePodcast(DB.Model):
-    id = DB.Column(DB.Integer, primary_key=True)
+    id = DB.Column(DB.String(50), primary_key=True)
     nombre = DB.Column(DB.String(50), nullable=False)
     capitulos = DB.relationship('CapituloPodcast', backref='serie')  # Relacion 'compuesta'
 
 
 class CapituloPodcast(DB.Model):
-    id = DB.Column(DB.Integer, primary_key=True)
+    id = DB.Column(DB.String(50), primary_key=True)
     nombre = DB.Column(DB.String(50))
-    id_serie = DB.Column(DB.Integer, DB.ForeignKey('serie_podcast.id'))
+    id_serie = DB.Column(DB.String(50), DB.ForeignKey('serie_podcast.id'))
 
 
 class ListaPodcast(DB.Model):

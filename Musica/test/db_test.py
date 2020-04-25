@@ -114,13 +114,13 @@ canciones = [
 ]
 
 series_podcast = [
-    SeriePodcast(nombre='SeriePodcast1'),
-    SeriePodcast(nombre='SeriePodcast2')
+    SeriePodcast(nombre='SeriePodcast1', id='a1'),
+    SeriePodcast(nombre='SeriePodcast2', id='a2')
 ]
 
 capitulos_podcast = [
-    CapituloPodcast(nombre='CapituloPodcast1'),
-    CapituloPodcast(nombre='CapituloPodcast2')
+    CapituloPodcast(nombre='CapituloPodcast1', id='c1'),
+    CapituloPodcast(nombre='CapituloPodcast2', id='c2')
 ]
 
 listas_podcast = [
