@@ -682,7 +682,7 @@ def podcast_fav():
         return "Error"
 
     if serie is None:
-        serie = SeriePodcast(id=int(podcast), nombre=nombre, capitulos=[])
+        serie = SeriePodcast(id=podcast, nombre=nombre, capitulos=[])
 
     try:
         lista = DB.session.query(ListaPodcast).filter_by(email_usuario=email).first()
@@ -744,7 +744,7 @@ def podcast_is_fav():
                                                        Usuario.listas_podcast,
                                                        ListaPodcast.series_podcast,
                                                        Usuario.email == usuario).first()
-        return jsonify(existe is not None)
+        return str(existe is not None)
     except (IntegrityError, OperationalError):
         DB.session.rollback()
         return "Error"
