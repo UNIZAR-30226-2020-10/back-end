@@ -59,7 +59,8 @@ listas = [
     Lista(nombre='Favoritas', descripcion='Canciones favoritas'),
     Lista(nombre='Gimnasio', descripcion='Canciones para entrenar en el gimnasio'),
     Lista(nombre='Mis favoritos', descripcion='Mis canciones favoritas'),
-    Lista(nombre='Coche', descripcion='Canciones para escuchar en el coche')
+    Lista(nombre='Coche', descripcion='Canciones para escuchar en el coche'),
+    Lista(nombre='Favoritas', descripcion='Canciones favoritas')
 ]
 
 usuarios = [
@@ -197,7 +198,6 @@ for i in range(8, 12):
 for i in range(4, 12):
     insert_to_list(listas[3].apariciones, canciones[i])
 
-
 # Relacion amistad
 usuarios[0].amistades.append(usuarios[1])
 usuarios[1].amistades.append(usuarios[0])
@@ -206,7 +206,7 @@ usuarios[1].amistades.append(usuarios[0])
 
 # Relacion compuesto
 for i in range(len(canciones)):
-    canciones[i].album = albumes[i%len(albumes)]
+    canciones[i].album = albumes[i % len(albumes)]
 albumes[0].canciones.append(canciones[0])
 albumes[0].canciones.append(canciones[1])
 albumes[0].canciones.append(canciones[2])
@@ -222,7 +222,10 @@ albumes[1].canciones.append(canciones[11])
 
 # Relacion tiene
 usuarios[0].listas.append(listas[0])
-usuarios[1].listas.append(listas[1])
+usuarios[0].listas.append(listas[1])
+usuarios[0].listas.append(listas[2])
+usuarios[0].listas.append(listas[3])
+usuarios[1].listas.append(listas[4])
 
 # Relacion compartida (lista)
 listas[1].comparticiones.append(listas_compartidas[0])
@@ -275,5 +278,10 @@ listas_podcast[0].series_podcast.append(series_podcast[1])
 
 # Relacion tiene
 usuarios[0].listas_podcast.append(listas_podcast[0])
+
+# Relacion 'suscrito'
+for i in range(len(artistas) // 2):
+    usuarios[0].artistas.append(artistas[i])
+    usuarios[1].artistas.append(artistas[i])
 
 DB.session.commit()
