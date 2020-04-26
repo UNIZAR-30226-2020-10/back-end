@@ -538,6 +538,9 @@ def crear_lista():
     """
     lista, desc, usuario = leer_datos(request, ["lista", "desc", "usuario"])
 
+    if lista == "Favoritos":
+        return "No favoritos"
+
     try:
         element = Lista(nombre=lista, descripcion=desc, email_usuario=usuario)
         DB.session.add(element)
