@@ -935,7 +935,8 @@ def delete_user():
             DB.session.commit()
 
             return "Success"
-        except (IntegrityError, OperationalError):
+        except (IntegrityError, OperationalError) as error:
+            print(error)
             DB.session.rollback()
             return "Error"
     else:
