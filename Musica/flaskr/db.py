@@ -216,19 +216,19 @@ class Cancion(DB.Model):
 
 class SeriePodcast(DB.Model):
     id = DB.Column(DB.String(50), primary_key=True)
-    nombre = DB.Column(DB.String(50), nullable=False)
+    nombre = DB.Column(DB.String(150), nullable=False)
     capitulos = DB.relationship('CapituloPodcast', backref='serie')  # Relacion 'compuesta'
 
 
 class CapituloPodcast(DB.Model):
     id = DB.Column(DB.String(50), primary_key=True)
-    nombre = DB.Column(DB.String(50))
+    nombre = DB.Column(DB.String(150))
     id_serie = DB.Column(DB.String(50), DB.ForeignKey('serie_podcast.id'))
 
 
 class ListaPodcast(DB.Model):
     id = DB.Column(DB.Integer, primary_key=True)
-    nombre = DB.Column(DB.String(50))
+    nombre = DB.Column(DB.String(150))
     email_usuario = DB.Column(DB.String(25), DB.ForeignKey('usuario.email'))  # Relacion 'tiene' de usuario
     series_podcast = DB.relationship('SeriePodcast', secondary=aparicion_podcast,
                                      backref=DB.backref('lista_podcast'))
