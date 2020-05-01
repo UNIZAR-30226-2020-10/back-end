@@ -88,6 +88,10 @@ suscripcion = DB.Table('suscripcion',
 
 
 class Aparicion(DB.Model):
+    """
+    Aparición de una canción en una lista de reproducción(Lista)
+    Relación N:M con atributos
+    """
     __tablename__ = 'aparicion'
     id_lista = DB.Column(DB.Integer, DB.ForeignKey('lista.id'), primary_key=True)
     id_cancion = DB.Column(DB.Integer, DB.ForeignKey('cancion.id'), primary_key=True)
@@ -96,6 +100,9 @@ class Aparicion(DB.Model):
 
 
 class Categoria(DB.Model):
+    """
+    Entidad que representa la categoría de una canción
+    """
     nombre = DB.Column(DB.String(20), primary_key=True)
     descripcion = DB.Column(DB.String(100))
     canciones = DB.relationship('Cancion', secondary=categorizacion,
@@ -103,6 +110,9 @@ class Categoria(DB.Model):
 
 
 class Artista(DB.Model):
+    """
+    Entidad que representa un compositor de canciones, puede ser el artista principal o secundario
+    """
     nombre = DB.Column(DB.String(20), primary_key=True)
     fecha_nacimiento = DB.Column(DB.DateTime)
     pais = DB.Column(DB.String(40))
@@ -114,6 +124,9 @@ class Artista(DB.Model):
 
 
 class Album(DB.Model):
+    """
+    Entidad que representa un conjunto de canciones que son lanzadas por Artista/s de forma conjunta
+    """
     nombre = DB.Column(DB.String(20), primary_key=True)
     descripcion = DB.Column(DB.String(100))
     fecha = DB.Column(DB.DateTime)
@@ -122,6 +135,9 @@ class Album(DB.Model):
 
 
 class Lista(DB.Model):
+    """
+    Entidad que representa una lista de producción, de usuarios o del sistema
+    """
     id = DB.Column(DB.Integer, primary_key=True)
     nombre = DB.Column(DB.String(20), nullable=False)
     descripcion = DB.Column(DB.String(100))
@@ -131,6 +147,9 @@ class Lista(DB.Model):
 
 
 class Usuario(DB.Model):
+    """
+    Entidad que reprenta a un usuario del sistema de canciones y podcast
+    """
     email = DB.Column(DB.String(25), primary_key=True)
     nombre = DB.Column(DB.String(20), nullable=False)
     password = DB.Column(DB.String, nullable=False)
@@ -181,12 +200,19 @@ class Usuario(DB.Model):
 
 
 class Solicitud(DB.Model):
+    """
+    Tipo de entidad Notificacion que representa una invitación de amistad para establecer
+     una relación de amistad entre usuarios
+    """
     id = DB.Column(DB.Integer, primary_key=True)
     email_usuario_notificado = DB.Column(DB.String(25), DB.ForeignKey('usuario.email'))
     email_usuario_notificante = DB.Column(DB.String(25), DB.ForeignKey('usuario.email'))
 
 
 class ListaCompartida(DB.Model):
+    """
+    Tipo de entidad Notificacion que representa una compartición de una loista de producción
+    """
     id = DB.Column(DB.Integer, primary_key=True)
     id_lista = DB.Column(DB.Integer, DB.ForeignKey('lista.id'))
     email_usuario_notificado = DB.Column(DB.String(25), DB.ForeignKey('usuario.email'))
@@ -194,6 +220,9 @@ class ListaCompartida(DB.Model):
 
 
 class CancionCompartida(DB.Model):
+    """
+    Tipo de entidad Notificación que representa una compartición de canción
+    """
     id = DB.Column(DB.Integer, primary_key=True)
     id_cancion = DB.Column(DB.Integer, DB.ForeignKey('cancion.id'))
     email_usuario_notificado = DB.Column(DB.String(25), DB.ForeignKey('usuario.email'))
@@ -201,6 +230,9 @@ class CancionCompartida(DB.Model):
 
 
 class Cancion(DB.Model):
+    """
+    Entidad que representa una canción de un Artista en un  Album
+    """
     id = DB.Column(DB.Integer, primary_key=True)  # Cambiar por clave compuesta
     path = DB.Column(DB.String(150), nullable=False)
     nombre = DB.Column(DB.String(20), nullable=False)
@@ -215,18 +247,27 @@ class Cancion(DB.Model):
 
 
 class SeriePodcast(DB.Model):
+    """
+    Entidad que representa un conjunto de capitulos de podcast
+    """
     id = DB.Column(DB.String(50), primary_key=True)
     nombre = DB.Column(DB.String(150), nullable=False)
     capitulos = DB.relationship('CapituloPodcast', backref='serie')  # Relacion 'compuesta'
 
 
 class CapituloPodcast(DB.Model):
+    """
+    Entidad que representa un único capitulo de una serie de podcast
+    """
     id = DB.Column(DB.String(50), primary_key=True)
     nombre = DB.Column(DB.String(150))
     id_serie = DB.Column(DB.String(50), DB.ForeignKey('serie_podcast.id'))
 
 
 class ListaPodcast(DB.Model):
+    """
+    Entidad que representa un conjunto de series de podcast
+    """
     id = DB.Column(DB.Integer, primary_key=True)
     nombre = DB.Column(DB.String(150))
     email_usuario = DB.Column(DB.String(25), DB.ForeignKey('usuario.email'))  # Relacion 'tiene' de usuario

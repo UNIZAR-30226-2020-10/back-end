@@ -1,6 +1,6 @@
 """
 Autor: Alberto Calvo Rubió
-Fecha-última_modificación: 12-04-2020
+Fecha-última_modificación: 1-05-2020
 Pruebas y poblar base de datos
 """
 
@@ -12,6 +12,12 @@ DB.create_all()
 
 
 def insert_to_list(lista, cancion):
+    """
+    Inserta una canción en una lista de reproducción como una nueva aparicion de esa cancion en la lista
+    :param lista:
+    :param cancion:
+    :return:
+    """
     lista.append(Aparicion(cancion=cancion, orden=len(lista)))
 
 
