@@ -78,21 +78,6 @@ usuarios = [
             foto='https://psoftware.s3.amazonaws.com/usuario_karen.png')
 ]
 
-solicitudes = [
-    Solicitud(),
-    Solicitud()
-]
-
-listas_compartidas = [
-    ListaCompartida(),
-    ListaCompartida()
-]
-
-canciones_compartidas = [
-    CancionCompartida(),
-    CancionCompartida()
-]
-
 canciones = [
     Cancion(path='https://psoftware.s3.amazonaws.com/alan_walker-fade.mp3',
             nombre='Fade', duracion=120),
@@ -132,6 +117,24 @@ capitulos_podcast = [
 
 listas_podcast = [
     ListaPodcast(nombre='Favoritos')
+]
+
+solicitudes = [
+    Solicitud(email_usuario_notificante=usuarios[0].email, email_usuario_notificado=usuarios[1].email)
+]
+
+listas_compartidas = [
+    ListaCompartida(email_usuario_notificante=usuarios[0].email, email_usuario_notificado=usuarios[1].email,
+                    id_lista=1),
+    ListaCompartida(email_usuario_notificante=usuarios[1].email, email_usuario_notificado=usuarios[0].email,
+                    id_lista=4)
+]
+
+canciones_compartidas = [
+    CancionCompartida(email_usuario_notificante=usuarios[0].email, email_usuario_notificado=usuarios[1].email,
+                      id_cancion=1),
+    CancionCompartida(email_usuario_notificante=usuarios[1].email, email_usuario_notificado=usuarios[0].email,
+                      id_cancion=2)
 ]
 
 DB.session.add_all(categorias)
@@ -204,6 +207,9 @@ for i in range(8, 12):
 for i in range(4, 12):
     insert_to_list(listas[3].apariciones, canciones[i])
 
+for i in range(len(canciones)):
+    insert_to_list(listas[4].apariciones, canciones[i])
+
 # Relacion amistad
 usuarios[0].amistades.append(usuarios[1])
 usuarios[1].amistades.append(usuarios[0])
@@ -244,31 +250,6 @@ canciones[0].comparticiones.append(canciones_compartidas[1])
 # Relacion ultima
 usuarios[0].id_ultima_cancion = canciones[0].id
 usuarios[1].id_ultima_cancion = canciones[0].id
-
-# Relaciones recibe y envia (solicitud, listacompartida y cancioncompartida)
-solicitudes = [
-    Solicitud(email_usuario_notificado=usuarios[0].email,
-              email_usuario_notificante=usuarios[1].email),
-    Solicitud(email_usuario_notificado=usuarios[1].email,
-              email_usuario_notificante=usuarios[0].email)
-]
-DB.session.add_all(solicitudes)
-
-listas_compartidas = [
-    ListaCompartida(email_usuario_notificado=usuarios[0].email,
-                    email_usuario_notificante=usuarios[1].email),
-    ListaCompartida(email_usuario_notificado=usuarios[1].email,
-                    email_usuario_notificante=usuarios[0].email)
-]
-DB.session.add_all(listas_compartidas)
-
-canciones_compartidas = [
-    CancionCompartida(email_usuario_notificado=usuarios[0].email,
-                      email_usuario_notificante=usuarios[1].email),
-    CancionCompartida(email_usuario_notificado=usuarios[1].email,
-                      email_usuario_notificante=usuarios[0].email)
-]
-DB.session.add_all(canciones_compartidas)
 
 # Relacion compuesta
 series_podcast[0].capitulos.append(capitulos_podcast[0])

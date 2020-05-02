@@ -42,48 +42,46 @@ else:
 
 DB = SQLAlchemy(APP)
 
-# Relaciones N:M
+# MANY TO MANY relationships
 
-# Relacion 'comprende'
+# Categoria <-> Cancion 'comprende'
 categorizacion = DB.Table('categorizacion',
                           DB.Column('categoria', DB.String(20), DB.ForeignKey('categoria.nombre')),
                           DB.Column('cancion', DB.Integer, DB.ForeignKey('cancion.id'))
                           )
-# Relacion 'compone'
+# Artista <-> Cancion 'compone'
 composicion = DB.Table('composicion',
                        DB.Column('artista', DB.String(20), DB.ForeignKey('artista.nombre')),
                        DB.Column('cancion', DB.Integer, DB.ForeignKey('cancion.id'))
                        )
-# Relacion 'publica'
+# Artista <-> Album 'publica'
 publicacion = DB.Table('publicacion',
                        DB.Column('artista', DB.String(20), DB.ForeignKey('artista.nombre')),
                        DB.Column('album', DB.String(20), DB.ForeignKey('album.nombre'))
                        )
 
-# Relacion 'conoce'
+# Usuario <-> Usuario 'conoce'
 amistad = DB.Table('amistad',
-                   DB.Column('usuario1', DB.String(25), DB.ForeignKey('usuario.email')),
-                   DB.Column('usuario2', DB.String(25), DB.ForeignKey('usuario.email'))
+                   DB.Column('usuario1', DB.String(25), DB.ForeignKey('usuario.email', ondelete="CASCADE")),
+                   DB.Column('usuario2', DB.String(25), DB.ForeignKey('usuario.email', ondelete="CASCADE"))
                    )
 
-# Relacion 'escuchado'
+# CapituloPodcast <-> Usuario 'escuchado'
 cap_escuchado = DB.Table('cap_escuchado',
-                         DB.Column('capitulo', DB.String(50), DB.ForeignKey('capitulo_podcast.id')),
-                         DB.Column('usuario', DB.String(25), DB.ForeignKey('usuario.email'))
+                         DB.Column('capitulo', DB.String(50), DB.ForeignKey('capitulo_podcast.id', ondelete="CASCADE")),
+                         DB.Column('usuario', DB.String(25), DB.ForeignKey('usuario.email', ondelete="CASCADE"))
                          )
 
-# Relacion 'aparece' de ListaPodcast y SeriePodcast
+# SeriePodcast <-> ListaPodcast 'aparece'
 aparicion_podcast = DB.Table('aparicion_podcast',
-                             DB.Column('serie_podcast', DB.String(50),
-                                       DB.ForeignKey('serie_podcast.id')),
-                             DB.Column('lista_podcast', DB.Integer,
-                                       DB.ForeignKey('lista_podcast.id'))
+                             DB.Column('serie_podcast', DB.String(50), DB.ForeignKey('serie_podcast.id')),
+                             DB.Column('lista_podcast', DB.Integer, DB.ForeignKey('lista_podcast.id'))
                              )
 
-# Relacion 'suscrito'
+# Usuario <-> Artista 'suscrito'
 suscripcion = DB.Table('suscripcion',
-                       DB.Column('usuario', DB.String(25), DB.ForeignKey('usuario.email')),
-                       DB.Column('artista', DB.String(20), DB.ForeignKey('artista.nombre'))
+                       DB.Column('usuario', DB.String(25), DB.ForeignKey('usuario.email', ondelete="CASCADE")),
+                       DB.Column('artista', DB.String(20), DB.ForeignKey('artista.nombre', ondelete="CASCADE"))
                        )
 
 
@@ -96,7 +94,10 @@ class Aparicion(DB.Model):
     id_lista = DB.Column(DB.Integer, DB.ForeignKey('lista.id'), primary_key=True)
     id_cancion = DB.Column(DB.Integer, DB.ForeignKey('cancion.id'), primary_key=True)
     orden = DB.Column(DB.Integer, nullable=False)
-    cancion = DB.relationship('Cancion', backref=DB.backref('apariciones'))
+
+    # Lista - Aparicion - Cancion : Associaton object
+    cancion = DB.relationship('Cancion', back_populates="apariciones")
+    lista = DB.relationship('Lista', back_populates="apariciones")
 
 
 class Categoria(DB.Model):
@@ -105,8 +106,10 @@ class Categoria(DB.Model):
     """
     nombre = DB.Column(DB.String(20), primary_key=True)
     descripcion = DB.Column(DB.String(100))
-    canciones = DB.relationship('Cancion', secondary=categorizacion,
-                                backref=DB.backref('categorias'))
+
+    # MANY TO MANY relationships
+    # Categoria <-> Cancion 'comprende'
+    canciones = DB.relationship('Cancion', secondary=categorizacion, back_populates="categorias")
 
 
 class Artista(DB.Model):
@@ -117,10 +120,14 @@ class Artista(DB.Model):
     fecha_nacimiento = DB.Column(DB.DateTime)
     pais = DB.Column(DB.String(40))
     alias = DB.Column(DB.String(20))
-    composiciones = DB.relationship('Cancion',
-                                    secondary=composicion, backref=DB.backref('artistas'))
-    publicaciones = DB.relationship('Album',
-                                    secondary=publicacion, backref=DB.backref('artistas'))
+
+    # MANY TO MANY relationships
+    # Artista <-> Cancion 'compone'
+    composiciones = DB.relationship('Cancion', secondary=composicion, back_populates="artistas")
+    # Artista <-> Album 'publica'
+    publicaciones = DB.relationship('Album', secondary=publicacion, back_populates="artistas")
+    # Artista <-> Usuario 'suscrito'
+    suscriptores = DB.relationship('Usuario', secondary=suscripcion, back_populates="artistas")
 
 
 class Album(DB.Model):
@@ -131,7 +138,14 @@ class Album(DB.Model):
     descripcion = DB.Column(DB.String(100))
     fecha = DB.Column(DB.DateTime)
     foto = DB.Column(DB.String(100), default='https://psoftware.s3.amazonaws.com/album_defecto.jpg')
-    canciones = DB.relationship('Cancion', backref='album')  # Relacion 'compuesto'
+
+    # MANY TO MANY relationships
+    # Album <-> Artista 'publica'
+    artistas = DB.relationship('Artista', secondary=publicacion, back_populates="publicaciones")
+
+    # ONE TO MANY relationships
+    # Album -> Cancion 'compuesto'
+    canciones = DB.relationship('Cancion', back_populates="album")
 
 
 class Lista(DB.Model):
@@ -141,9 +155,19 @@ class Lista(DB.Model):
     id = DB.Column(DB.Integer, primary_key=True)
     nombre = DB.Column(DB.String(20), nullable=False)
     descripcion = DB.Column(DB.String(100))
-    apariciones = DB.relationship('Aparicion', cascade="delete")
-    email_usuario = DB.Column(DB.String(25), DB.ForeignKey('usuario.email'))  # Relacion 'tiene' de usuario
-    comparticiones = DB.relationship('ListaCompartida', backref='lista')  # Relacion 'compartida'
+
+    # MANY TO MANY relationships
+    # Lista <-> Cancion 'aparece' Association Object: Aparicion
+    apariciones = DB.relationship('Aparicion', back_populates="lista", cascade="save-update, delete")
+
+    # ONE TO MANY relationships
+    # Lista -> ListaCompartida 'compartida'
+    comparticiones = DB.relationship('ListaCompartida', back_populates="lista")
+
+    # MANY TO ONE relationships
+    # Lista <- Usuario 'tiene'
+    email_usuario = DB.Column(DB.String(25), DB.ForeignKey('usuario.email', ondelete="CASCADE"))
+    usuario = DB.relationship('Usuario', back_populates="listas")
 
 
 class Usuario(DB.Model):
@@ -158,45 +182,52 @@ class Usuario(DB.Model):
     foto = DB.Column(DB.String(100), default='https://psoftware.s3.amazonaws.com/user_default.jpg')
     token = DB.Column(DB.String(), unique=True)
     fcm_token = DB.Column(DB.String(), unique=True)
+
+    # MANY TO MANY relationships
+    # Usuario <-> Artista 'suscrito'
+    artistas = DB.relationship('Artista', secondary=suscripcion, back_populates="suscriptores")
+    # Usuario <-> CapituloPodcast 'escuchado'
+    cap_escuchados = DB.relationship('CapituloPodcast', secondary=cap_escuchado, back_populates="oyentes")
+    # Usuario <-> Usuario 'conoce'
     amistades = DB.relationship('Usuario', secondary='amistad',
                                 primaryjoin=email == amistad.c.usuario1,
                                 secondaryjoin=amistad.c.usuario2 == email)
-    listas = DB.relationship('Lista', backref='usuario')  # Relacion 'tiene' de canciones
-    # Relacion 'tiene' de podcast
-    listas_podcast = DB.relationship('ListaPodcast', backref='usuario')
+
+    # ONE TO MANY relationships
+    # Usuario -> Lista 'tiene'
+    listas = DB.relationship('Lista', back_populates="usuario", cascade='save-update, delete')
+    # Usuario -> ListaPodcast 'tiene' de podcast
+    listas_podcast = DB.relationship('ListaPodcast', back_populates="usuario", cascade='save-update, delete')
+    # Usuario -> Solicitud 'envia'
+    solicitudes_enviadas = DB.relationship('Solicitud', back_populates="notificante",
+                                           foreign_keys="Solicitud.email_usuario_notificante",
+                                           cascade='save-update, delete')
+    # Usuario -> ListaCompartida 'envia'
+    listas_enviadas = DB.relationship('ListaCompartida', back_populates="notificante",
+                                      foreign_keys="ListaCompartida.email_usuario_notificante",
+                                      cascade='save-update, delete')
+    # Usuario -> CancionCompartida 'envia'
+    canciones_enviadas = DB.relationship('CancionCompartida', back_populates="notificante",
+                                         foreign_keys="CancionCompartida.email_usuario_notificante",
+                                         cascade='save-update, delete')
+    # Usuario -> Solicitud 'recibe'
+    solicitudes_recibidas = DB.relationship('Solicitud', back_populates="notificado",
+                                            foreign_keys="Solicitud.email_usuario_notificado",
+                                            cascade='save-update, delete')
+    # Usuario -> ListaCompartida 'recibe'
+    listas_recibidas = DB.relationship('ListaCompartida', back_populates="notificado",
+                                       foreign_keys="ListaCompartida.email_usuario_notificado",
+                                       cascade='save-update, delete')
+    # Relacion 'recibe'
+    canciones_recibidas = DB.relationship('CancionCompartida', back_populates="notificado",
+                                          foreign_keys="CancionCompartida.email_usuario_notificado",
+                                          cascade='save-update, delete')
+
+    # MANY TO ONE relationships
+    # Usuario <- Cancion 'ultima'
     id_ultima_cancion = DB.Column(DB.Integer, DB.ForeignKey('cancion.id'))
+    ultima_cancion = DB.relationship('Cancion', back_populates="usuarios_ultima_cancion")
     segundo_ultima_cancion = DB.Column(DB.Integer)
-
-    # Relacion 'recibe'
-    solicitudes_recibidas = DB.relationship('Solicitud', backref='notificado',
-                                            foreign_keys="Solicitud.email_usuario_notificado")
-
-    # Relacion 'envia'
-    solicitudes_enviadas = DB.relationship('Solicitud', backref='notificante',
-                                           foreign_keys="Solicitud.email_usuario_notificante")
-
-    # Relacion 'recibe'
-    listas_recibidas = DB.relationship('ListaCompartida', backref='notificado',
-                                       foreign_keys="ListaCompartida.email_usuario_notificado")
-
-    # Relacion 'envia'
-    listas_enviadas = DB.relationship('ListaCompartida', backref='notificante',
-                                      foreign_keys="ListaCompartida.email_usuario_notificante")
-
-    # Relacion 'envia'
-    canciones_enviadas = DB.relationship('CancionCompartida', backref='notificante',
-                                         foreign_keys="CancionCompartida.email_usuario_notificante")
-
-    # Relacion 'recibe'
-    canciones_recibidas = DB.relationship('CancionCompartida', backref='notificado',
-                                          foreign_keys="CancionCompartida.email_usuario_notificado")
-
-    # Relacion 'escuchado'
-    cap_escuchados = DB.relationship('CapituloPodcast', secondary=cap_escuchado,
-                                     backref=DB.backref('oyentes'))
-
-    # Relacion 'suscrito'
-    artistas = DB.relationship('Artista', secondary=suscripcion, backref=DB.backref('suscriptores'))
 
 
 class Solicitud(DB.Model):
@@ -205,8 +236,19 @@ class Solicitud(DB.Model):
      una relación de amistad entre usuarios
     """
     id = DB.Column(DB.Integer, primary_key=True)
-    email_usuario_notificado = DB.Column(DB.String(25), DB.ForeignKey('usuario.email'))
-    email_usuario_notificante = DB.Column(DB.String(25), DB.ForeignKey('usuario.email'))
+
+    # MANY TO ONE relationships
+    # Solicitud <- Usuario 'envia'
+    email_usuario_notificante = DB.Column(DB.String(25), DB.ForeignKey('usuario.email', ondelete="CASCADE"),
+                                          nullable=False)
+    notificante = DB.relationship('Usuario', back_populates="solicitudes_enviadas",
+                                  foreign_keys=email_usuario_notificante)
+
+    # Solicitud <- Usuario 'recibe'
+    email_usuario_notificado = DB.Column(DB.String(25), DB.ForeignKey('usuario.email', ondelete="CASCADE"),
+                                         nullable=False)
+    notificado = DB.relationship('Usuario', back_populates="solicitudes_recibidas",
+                                 foreign_keys=email_usuario_notificante)
 
 
 class ListaCompartida(DB.Model):
@@ -214,9 +256,21 @@ class ListaCompartida(DB.Model):
     Tipo de entidad Notificacion que representa una compartición de una loista de producción
     """
     id = DB.Column(DB.Integer, primary_key=True)
-    id_lista = DB.Column(DB.Integer, DB.ForeignKey('lista.id'))
-    email_usuario_notificado = DB.Column(DB.String(25), DB.ForeignKey('usuario.email'))
-    email_usuario_notificante = DB.Column(DB.String(25), DB.ForeignKey('usuario.email'))
+
+    # MANY TO ONE relationships
+    # ListaCompartida <- Lista 'compartida'
+    id_lista = DB.Column(DB.Integer, DB.ForeignKey('lista.id'), nullable=False)
+    lista = DB.relationship('Lista', back_populates="comparticiones")
+
+    # ListaCompartida <- Usuario 'envia'
+    email_usuario_notificante = DB.Column(DB.String(25), DB.ForeignKey('usuario.email', ondelete="CASCADE"),
+                                          nullable=False)
+    notificante = DB.relationship('Usuario', back_populates="listas_enviadas", foreign_keys=email_usuario_notificante)
+
+    # ListaCompartida <- Usuario 'recibe'
+    email_usuario_notificado = DB.Column(DB.String(25), DB.ForeignKey('usuario.email', ondelete="CASCADE"),
+                                         nullable=False)
+    notificado = DB.relationship('Usuario', back_populates="listas_recibidas", foreign_keys=email_usuario_notificado)
 
 
 class CancionCompartida(DB.Model):
@@ -224,26 +278,51 @@ class CancionCompartida(DB.Model):
     Tipo de entidad Notificación que representa una compartición de canción
     """
     id = DB.Column(DB.Integer, primary_key=True)
-    id_cancion = DB.Column(DB.Integer, DB.ForeignKey('cancion.id'))
-    email_usuario_notificado = DB.Column(DB.String(25), DB.ForeignKey('usuario.email'))
-    email_usuario_notificante = DB.Column(DB.String(25), DB.ForeignKey('usuario.email'))
+
+    # MANY TO ONE relationships
+    # CancionCompartida <- Usuario
+    email_usuario_notificante = DB.Column(DB.String(25), DB.ForeignKey('usuario.email', ondelete="CASCADE"),
+                                          nullable=False)
+    notificante = DB.relationship('Usuario', back_populates="canciones_enviadas",
+                                  foreign_keys=email_usuario_notificante)
+
+    # CancionCompartida <- Usuario
+    email_usuario_notificado = DB.Column(DB.String(25), DB.ForeignKey('usuario.email', ondelete="CASCADE"),
+                                         nullable=False)
+    notificado = DB.relationship('Usuario', back_populates="canciones_recibidas", foreign_keys=email_usuario_notificado)
+
+    # CancionCompartida <- Cancion
+    id_cancion = DB.Column(DB.Integer, DB.ForeignKey('cancion.id'), nullable=False)
+    cancion = DB.relationship('Cancion', back_populates="comparticiones")
 
 
 class Cancion(DB.Model):
     """
-    Entidad que representa una canción de un Artista en un  Album
+    Entidad que representa una canción de un Artista en un Album
     """
-    id = DB.Column(DB.Integer, primary_key=True)  # Cambiar por clave compuesta
+    id = DB.Column(DB.Integer, primary_key=True)
     path = DB.Column(DB.String(150), nullable=False)
     nombre = DB.Column(DB.String(20), nullable=False)
     duracion = DB.Column(DB.Integer, nullable=False)  # Segundos
+
+    # MANY TO MANY relationships
+    # Cancion <-> Categoria 'comprende'
+    categorias = DB.relationship('Categoria', secondary=categorizacion, back_populates="canciones")
+    # Cancion <-> Artista 'compone'
+    artistas = DB.relationship('Artista', secondary=composicion, back_populates="composiciones")
+    # Cancion <-> Lista 'aparece' Association Object: Aparicion
+    apariciones = DB.relationship('Aparicion', back_populates="cancion", cascade="save-update, delete")
+
+    # ONE TO MANY relationships
+    # Cancion -> CancionCompartida 'compartida'
+    comparticiones = DB.relationship('CancionCompartida', back_populates="cancion")
+    # Cancion -> Usuario 'ultima'
+    usuarios_ultima_cancion = DB.relationship('Usuario', back_populates="ultima_cancion")
+
+    # MANY TO ONE relationships
+    # Cancion <- Album 'compuesto'
     nombre_album = DB.Column(DB.String(20), DB.ForeignKey('album.nombre'))
-
-    # Relacion 'compartida'
-    comparticiones = DB.relationship('CancionCompartida', backref='cancion')
-
-    # Relacion 'ultima'
-    reproducciones = DB.relationship('Usuario', backref='ultima_cancion')
+    album = DB.relationship('Album', back_populates="canciones")
 
 
 class SeriePodcast(DB.Model):
@@ -252,7 +331,14 @@ class SeriePodcast(DB.Model):
     """
     id = DB.Column(DB.String(50), primary_key=True)
     nombre = DB.Column(DB.String(150), nullable=False)
-    capitulos = DB.relationship('CapituloPodcast', backref='serie')  # Relacion 'compuesta'
+
+    # MANY TO MANY relationships
+    # SeriePodcast <-> ListaPodcast 'aparece'
+    listas_podcast = DB.relationship('ListaPodcast', secondary=aparicion_podcast, back_populates="series_podcast")
+
+    # ONE TO MANY relationships
+    # SeriePodcast -> CapituloPodcast 'compuesta'
+    capitulos = DB.relationship('CapituloPodcast', back_populates="serie")
 
 
 class CapituloPodcast(DB.Model):
@@ -261,7 +347,15 @@ class CapituloPodcast(DB.Model):
     """
     id = DB.Column(DB.String(50), primary_key=True)
     nombre = DB.Column(DB.String(150))
-    id_serie = DB.Column(DB.String(50), DB.ForeignKey('serie_podcast.id'))
+
+    # MANY TO MANY relationships
+    # CapituloPodcast <-> Usuario 'escuchado'
+    oyentes = DB.relationship('Usuario', secondary=cap_escuchado, back_populates="cap_escuchados")
+
+    # MANY TO ONE relationships
+    # CapituloPodcast <- SeriePodcast 'compuesta'
+    id_serie = DB.Column(DB.String(50), DB.ForeignKey('serie_podcast.id'), nullable=False)
+    serie = DB.relationship('SeriePodcast', back_populates="capitulos")
 
 
 class ListaPodcast(DB.Model):
@@ -270,9 +364,15 @@ class ListaPodcast(DB.Model):
     """
     id = DB.Column(DB.Integer, primary_key=True)
     nombre = DB.Column(DB.String(150))
-    email_usuario = DB.Column(DB.String(25), DB.ForeignKey('usuario.email'))  # Relacion 'tiene' de usuario
-    series_podcast = DB.relationship('SeriePodcast', secondary=aparicion_podcast,
-                                     backref=DB.backref('lista_podcast'))
+
+    # MANY TO MANY relationships
+    # ListaPodcast <-> SeriePodcast 'aparece'
+    series_podcast = DB.relationship('SeriePodcast', secondary=aparicion_podcast, back_populates="listas_podcast")
+
+    # MANY TO ONE relationships
+    # ListaPodcast <- Usuario 'tiene'
+    email_usuario = DB.Column(DB.String(25), DB.ForeignKey('usuario.email', ondelete="CASCADE"), nullable=False)
+    usuario = DB.relationship('Usuario', back_populates="listas_podcast")
 
 
 DB.create_all()
