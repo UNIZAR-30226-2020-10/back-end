@@ -3,6 +3,22 @@
 poblar_file=poblar.sh
 credenciales_file=${HOME}/.netrc
 
+function pruebas() {
+    echo "Ejecutando pruebas ..."
+    docker-compose down
+    docker-compose build
+    docker-compose up -d
+    sleep 2
+    docker exec -i back-end_web_1 python3 test/test_server.py
+    if [ $? -ne 0 ]; then
+      echo "ERROR: No se ha pasado las pruebas"
+      docker-compose down
+      exit 1
+    else
+      echo "... Pruebas superadas"
+    fi
+}
+
 [ $# -ne 1 ] && echo "Usage: $(basename $0) <development|production>" && exit 1
 
 [ ! -x $poblar_file ] && echo "No se encuentra $poblar_file"
@@ -23,6 +39,7 @@ development)
   ;;
 production)
   echo "Despliegue en producción..."
+  pruebas
   docker-compose build
   heroku container:login
   heroku container:push web --app $app
@@ -30,7 +47,10 @@ production)
   ./poblar.sh production
   heroku logs --tail --app psoftware
   ;;
+test)
+  pruebas
+  ;;
 *)
-  echo "Usage: $(basename $0) <development|production>" && exit 1
+  echo "Usage: $(basename $0) <development|production|test>" && exit 1
 esac
 
