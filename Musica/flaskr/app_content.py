@@ -981,7 +981,8 @@ def modificar_perfil():
     Modifica los datos de un usuario a partir de los datos recibidos en la peticion.
     Parametros de la peticion:
         - email: email del usuario OBLIGATORIO
-        - password: NO OBLIGATORIO
+        - password: OBLIGATORIO
+        - new_password: NO OBLIGATORIO
         - fecha: formato MM(/ | -)DD(/ | -)AAAA NO OBLIGATORIO
         - nombre: NO OBLIGATORIO
         - pais: NO OBLIGATORIO
@@ -1003,8 +1004,12 @@ def modificar_perfil():
         if usuario is None:
             return "No existe usuario"
 
-        if "password" in etiquetas:
-            usuario.password = datos["password"]
+        contraseña = datos["password"]
+        if usuario.password != contraseña:
+            return "Contraseña incorrecta"
+
+        if "new_password" in etiquetas:
+            usuario.password = datos["new_password"]
 
         if "fecha" in etiquetas:
             lista = datos["fecha"].replace("-", "/").split("/", 3)
