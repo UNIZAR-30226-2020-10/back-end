@@ -17,15 +17,6 @@ from flaskr.db import APP, fetch_data_by_id, Lista, Cancion, DB, Categoria, Arti
 # ORDENAR CANCIONES Y LISTAS
 # AÑADIR / ELIMINAR / MODIFICAR CATEGORIAS
 
-@APP.route('/', methods=['POST', 'GET'])
-def index():
-    """
-    Redirige a la pagina principal
-    Esto desaparecerá
-    :return:
-    """
-    return render_template("index.html")
-
 
 def leer_datos(req, etiquetas):
     """
@@ -353,8 +344,11 @@ def buscar_categorias(dato):
     :param dato:
     :return:
     """
-    dato = dato.split(" ")
-    datos = DB.session.query(Cancion).filter(Categoria.nombre.in_(dato), Categoria.canciones)
+    if type(dato) is str:
+        dato = dato.split(" ")
+
+    datos = DB.session.query(Cancion) \
+        .filter(Categoria.nombre.in_(dato), Categoria.canciones)
 
     return datos
 
@@ -367,7 +361,9 @@ def buscar_categorias_list(lista, dato):
     :param lista:
     :return:
     """
-    dato = dato.split(" ")
+    if type(dato) is str:
+        dato = dato.split(" ")
+
     lista = fetch_data_by_id(Lista, int(lista))
     if lista == "error":
         return "Error", False
