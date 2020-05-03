@@ -110,6 +110,7 @@ def listar_canciones(canciones):
         dictionary["Album"] = song.nombre_album
         dictionary["Imagen"] = song.album.foto
         dictionary["URL"] = song.path
+        dictionary["Categorias"] = song.categorias
         lista.append(dictionary)
 
     return lista
