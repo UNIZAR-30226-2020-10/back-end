@@ -81,6 +81,8 @@ def listar(tipo, tabla, usuario=None):
             dictionary = listar_artistas(dato)
         elif tipo == "album":
             dictionary = listar_albums(dato)
+        elif tipo == "categoria":
+            dictionary = listar_categorias(dato)
         else:
             dictionary = listar_canciones(dato)
 
@@ -159,11 +161,47 @@ def listar_artistas(artistas):
 
 
 def listar_podcast(lista):
+    """
+    Formatea los datos de una lista de podcast para devolverlos como una lista de ids
+    Auxiliar para transformar los datos en formato compatible con json
+    :param lista:
+    :return:
+    """
     podcast = []
     for element in lista:
         podcast.append(element.id)
 
     return podcast
+
+
+def listar_categorias(lista):
+    """
+    Formatea los datos de una lista de categorias para devolverlos como una lista de nombres de
+    categoria
+    Auxiliar para transformar los datos en formato compatible con json
+    :param lista:
+    :return:
+    """
+    categorias = []
+    for categoria in lista:
+        categorias.append(categoria.nombre)
+
+    return categorias
+
+
+def listar_usuarios(lista):
+    """
+    Formatea los datos de una lista de podcast para devolverlos como una lista de diccionarios
+    Auxiliar para transformar los datos en formato compatible con json
+    :param lista:
+    :return:
+    """
+    usuarios = []
+    for usuario in lista:
+        dictionary = {"Nombre": usuario.nombre, "Imagen": usuario.foto}
+        usuarios.append(dictionary)
+
+    return usuarios
 
 
 def listar_datos(tipo, tabla, dato):
@@ -379,6 +417,16 @@ def buscar_categorias_list(lista, dato):
     return datos, True
 
 
+def buscar_usuarios(nombre):
+    """
+    Devuelve los usuarios cuyo nombre contiene la subcadena buscada
+    :param nombre:
+    :return:
+    """
+    resultados = DB.session.query(Usuario).filter(Usuario.nombre.ilike('%' + nombre + '%')).all()
+    return resultados
+
+
 def search(dato):
     """
     Devuelve una lista de canciones cuyo nombre, autor o album se contengan la subcadena
@@ -484,6 +532,11 @@ def list_podcast():
     """
     usuario = leer_datos(request, ["email"])
     return jsonify(listar("podcast", None, usuario))
+
+
+@APP.route('/list_categories', methods=['POST', 'GET'])
+def list_categories():
+    return jsonify(listar("categoria", Categoria))
 
 
 @APP.route('/list_data', methods=['POST', 'GET'])  # Test DONE
@@ -744,6 +797,31 @@ def podcast_is_fav():
                                                        Usuario.listas_podcast,
                                                        ListaPodcast.series_podcast,
                                                        Usuario.email == usuario).first()
+        return str(existe is not None)
+    except (IntegrityError, OperationalError):
+        DB.session.rollback()
+        return "Error"
+
+
+@APP.route('/is_fav', methods=['POST', 'GET'])
+def is_fav():
+    """
+    Devuleve true si la cancion esta en la lista de favoritos del usuario especificado
+    Parametros de la peticion:
+        - cancion
+        - email
+    :return:
+    """
+    cancion, usuario = leer_datos(request, ["cancion", "email"])
+
+    try:
+        existe = DB.session.query(Lista).filter(Usuario.email == usuario,
+                                                Cancion.id == cancion,
+                                                Lista.nombre == "Favoritos",
+                                                Usuario.listas,
+                                                Lista.apariciones,
+                                                Aparicion.cancion).first()
+
         return str(existe is not None)
     except (IntegrityError, OperationalError):
         DB.session.rollback()
@@ -1031,3 +1109,19 @@ def modificar_perfil():
         if isinstance(error.orig, InvalidDatetimeFormat):
             return "Fecha incorrecta"
         return "Error"
+
+
+@APP.route('/search_users', methods=['POST', 'GET'])
+def search_user():
+    """
+    Busca los usuarios que coinciden con la cadena introducida
+    Parametros de la peticion:
+        - nombre: cadena a buscar
+    :return:
+    """
+    nombre = leer_datos(request, ['nombre'])
+
+    resultados = buscar_usuarios(nombre)
+    usuarios = listar_usuarios(resultados)
+
+    return jsonify(usuarios)

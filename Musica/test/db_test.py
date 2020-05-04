@@ -62,11 +62,11 @@ categorias = [
 ]
 
 listas = [
-    Lista(nombre='Favoritas', descripcion='Canciones favoritas'),
+    Lista(nombre='Favoritos', descripcion='Canciones favoritas'),
     Lista(nombre='Gimnasio', descripcion='Canciones para entrenar en el gimnasio'),
     Lista(nombre='Mis favoritos', descripcion='Mis canciones favoritas'),
     Lista(nombre='Coche', descripcion='Canciones para escuchar en el coche'),
-    Lista(nombre='Favoritas', descripcion='Canciones favoritas')
+    Lista(nombre='Favoritos', descripcion='Canciones favoritas')
 ]
 
 usuarios = [
