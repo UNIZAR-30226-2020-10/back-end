@@ -163,7 +163,8 @@ def get_single_song_esperado(cancion):
     return [{"ID": cancion.id, "Nombre": cancion.nombre,
              "Artistas": [artista.nombre for artista in cancion.artistas],
              "URL": cancion.path, "Imagen": cancion.album.foto,
-             "Album": cancion.nombre_album}]
+             "Album": cancion.nombre_album,
+             "Categorias": [categoria.nombre for categoria in cancion.categorias]}]
 
 
 def get_single_album_esperado(album):
