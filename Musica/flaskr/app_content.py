@@ -198,7 +198,7 @@ def listar_usuarios(lista):
     """
     usuarios = []
     for usuario in lista:
-        dictionary = {"Nombre": usuario.nombre, "Imagen": usuario.foto}
+        dictionary = {"Nombre": usuario.nombre, "Imagen": usuario.foto, "Email": usuario.email}
         usuarios.append(dictionary)
 
     return usuarios
