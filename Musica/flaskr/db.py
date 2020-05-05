@@ -261,7 +261,7 @@ class Solicitud(DB.Model):
                                          DB.ForeignKey('usuario.email', ondelete="CASCADE"),
                                          nullable=False)
     notificado = DB.relationship('Usuario', back_populates="solicitudes_recibidas",
-                                 foreign_keys=email_usuario_notificante)
+                                 foreign_keys=email_usuario_notificado)
 
 
 class ListaCompartida(DB.Model):

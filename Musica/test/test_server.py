@@ -238,7 +238,8 @@ class MyTestCase(unittest.TestCase):
                         "Imagen": lista.apariciones[0].cancion.album.foto,
                         "Desc": lista.descripcion,
                         "Canciones": get_single_song_esperado(cancion)}
-        comprobar_json(self, 'http://localhost:5000/list_data?lista=%s' % lista.id, res_esperado)
+        comprobar_json(self, 'http://localhost:5000/list_lists_data?lista=%s' % lista.id,
+                       res_esperado)
 
         delete([usuario, lista, cancion, album])
 
