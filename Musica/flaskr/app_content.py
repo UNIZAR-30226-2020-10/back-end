@@ -956,6 +956,9 @@ def autentificacion(email, password):
     if user is None:
         return False, "No user", None
 
+    if not user.confirmado:
+        return False, "Sin confirmar", None
+
     return user.password == password, "Contraseña incorrecta", user
 
 
