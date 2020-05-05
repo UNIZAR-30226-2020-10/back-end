@@ -183,7 +183,7 @@ class Usuario(DB.Model):
     """
     Entidad que reprenta a un usuario del sistema de canciones y podcast
     """
-    email = DB.Column(DB.String(25), primary_key=True)
+    email = DB.Column(DB.String(50), primary_key=True)
     nombre = DB.Column(DB.String(20), nullable=False)
     password = DB.Column(DB.String, nullable=False)
     fecha_nacimiento = DB.Column(DB.DateTime)
