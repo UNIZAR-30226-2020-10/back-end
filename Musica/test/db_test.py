@@ -70,10 +70,10 @@ listas = [
 ]
 
 usuarios = [
-    Usuario(email='elon@gmail.com', nombre='Elon Musk', password='passelon',
+    Usuario(email='elon@gmail.com', nombre='Elon Musk', password='HgdSUOL8Dst9gKUWtaoXqg==',
             fecha_nacimiento=datetime.datetime(2000, 1, 1), pais='United States of America',
             foto='https://psoftware.s3.amazonaws.com/usuario_elon-musk.jpeg'),
-    Usuario(email='karen@gmail.com', nombre='Karen Sparck Jones', password='passkaren',
+    Usuario(email='karen@gmail.com', nombre='Karen Sparck Jones', password='XDNYNrPgHEt5+WoZeB7uQw==',
             fecha_nacimiento=datetime.datetime(2001, 1, 1), pais='United Kingdom',
             foto='https://psoftware.s3.amazonaws.com/usuario_karen.png')
 ]
