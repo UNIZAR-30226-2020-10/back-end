@@ -975,7 +975,7 @@ def get_user(email):
 def send_mail(email, token):
     msg = Message(
         "Confirmation Email",
-        body="http://localhost:5000/confirm_email/" + token,
+        body="https://psoftware.herokuapp.com/confirm_email/" + token,
         recipients=[email],
         sender=APP.config["MAIL_DEFAULT_SENDER"]
     )
