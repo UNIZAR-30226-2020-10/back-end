@@ -163,7 +163,8 @@ def get_single_song_esperado(cancion):
     return [{"ID": cancion.id, "Nombre": cancion.nombre,
              "Artistas": [artista.nombre for artista in cancion.artistas],
              "URL": cancion.path, "Imagen": cancion.album.foto,
-             "Album": cancion.nombre_album}]
+             "Album": cancion.nombre_album,
+             "Categorias": [categoria.nombre for categoria in cancion.categorias]}]
 
 
 def get_single_album_esperado(album):
@@ -237,7 +238,8 @@ class MyTestCase(unittest.TestCase):
                         "Imagen": lista.apariciones[0].cancion.album.foto,
                         "Desc": lista.descripcion,
                         "Canciones": get_single_song_esperado(cancion)}
-        comprobar_json(self, 'http://localhost:5000/list_data?lista=%s' % lista.id, res_esperado)
+        comprobar_json(self, 'http://localhost:5000/list_lists_data?lista=%s' % lista.id,
+                       res_esperado)
 
         delete([usuario, lista, cancion, album])
 

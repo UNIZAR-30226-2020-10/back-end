@@ -5,26 +5,19 @@ Fichero que contiene la API de la aplicación TuneIT y sus funciones auxiliares
 """
 import datetime
 
-from flask import request, jsonify, render_template
+from flask import request, jsonify
+from itsdangerous import URLSafeTimedSerializer
 from psycopg2.errors import UniqueViolation, InvalidDatetimeFormat
 from sqlalchemy.exc import DataError, OperationalError, IntegrityError
 from flaskr.db import APP, fetch_data_by_id, Lista, Cancion, DB, Categoria, Artista, leer_todo, \
-    Usuario, Aparicion, Album, SeriePodcast, ListaPodcast
+    Usuario, Aparicion, Album, SeriePodcast, ListaPodcast, Solicitud, MAIL
+from flask_mail import Message
 
 
 # pylint: disable=no-member
 # BUSQUEDA DE CANCIONES Y LISTAS NOMBRE, ARTISTA, ALBUM / CATEGORIAS
 # ORDENAR CANCIONES Y LISTAS
 # AÑADIR / ELIMINAR / MODIFICAR CATEGORIAS
-
-@APP.route('/', methods=['POST', 'GET'])
-def index():
-    """
-    Redirige a la pagina principal
-    Esto desaparecerá
-    :return:
-    """
-    return render_template("index.html")
 
 
 def leer_datos(req, etiquetas):
@@ -61,23 +54,31 @@ def listar(tipo, tabla, usuario=None):
 
     if usuario is not None:
         try:
-            dato = DB.session.query(Usuario).filter_by(email=usuario).first()
+            usuario = DB.session.query(Usuario).filter_by(email=usuario).first()
         except (IntegrityError, OperationalError):
             DB.session.rollback()
             return "Error"
 
-        if dato is None:
+        if usuario is None:
             return "No existe el usuario"
             dictionary = listar_listas(dato.listas)
         else:
 
             if tipo == "podcast":
-                if dato.listas_podcast:
-                    dictionary = listar_podcast(dato.listas_podcast[0].series_podcast)
+                if usuario.listas_podcast:
+                    dictionary = listar_podcast(usuario.listas_podcast[0].series_podcast)
                 else:
                     dictionary = []
+            elif tipo == "suscripcion":
+                dictionary = listar_artistas(usuario.artistas)
+            elif tipo == "amistades":
+                dictionary = listar_usuarios(usuario.amistades)
+            elif tipo == "peticiones_recibidas":
+                dictionary = listar_peticiones(usuario.solicitudes_recibidas)
+            elif tipo == "peticiones_enviadas":
+                dictionary = listar_peticiones(usuario.solicitudes_enviadas)
             else:
-                dictionary = listar_listas(dato.listas)
+                dictionary = listar_listas(usuario.listas)
 
     else:
         try:
@@ -90,6 +91,8 @@ def listar(tipo, tabla, usuario=None):
             dictionary = listar_artistas(dato)
         elif tipo == "album":
             dictionary = listar_albums(dato)
+        elif tipo == "categoria":
+            dictionary = listar_categorias(dato)
         else:
             dictionary = listar_canciones(dato)
 
@@ -119,6 +122,7 @@ def listar_canciones(canciones):
         dictionary["Album"] = song.nombre_album
         dictionary["Imagen"] = song.album.foto
         dictionary["URL"] = song.path
+        dictionary["Categorias"] = [categoria.nombre for categoria in song.categorias]
         lista.append(dictionary)
 
     return lista
@@ -167,11 +171,58 @@ def listar_artistas(artistas):
 
 
 def listar_podcast(lista):
+    """
+    Formatea los datos de una lista de podcast para devolverlos como una lista de ids
+    Auxiliar para transformar los datos en formato compatible con json
+    :param lista:
+    :return:
+    """
     podcast = []
     for element in lista:
         podcast.append(element.id)
 
     return podcast
+
+
+def listar_categorias(lista):
+    """
+    Formatea los datos de una lista de categorias para devolverlos como una lista de nombres de
+    categoria
+    Auxiliar para transformar los datos en formato compatible con json
+    :param lista:
+    :return:
+    """
+    categorias = []
+    for categoria in lista:
+        categorias.append(categoria.nombre)
+
+    return categorias
+
+
+def listar_usuarios(lista):
+    """
+    Formatea los datos de una lista de podcast para devolverlos como una lista de diccionarios
+    Auxiliar para transformar los datos en formato compatible con json
+    :param lista:
+    :return:
+    """
+    usuarios = []
+    for usuario in lista:
+        if usuario.confirmado:
+            dictionary = {"Nombre": usuario.nombre, "Imagen": usuario.foto, "Email": usuario.email}
+            usuarios.append(dictionary)
+
+    return usuarios
+
+
+def listar_peticiones(lista):
+    peticiones = []
+    for peticion in lista:
+        dictionary = {"ID": peticion.id, "Emisor": listar_usuarios([peticion.notificante]),
+                      "Receptor": listar_usuarios([peticion.notificado])}
+        peticiones.append(dictionary)
+
+    return peticiones
 
 
 def listar_datos(tipo, tabla, dato):
@@ -353,8 +404,11 @@ def buscar_categorias(dato):
     :param dato:
     :return:
     """
-    dato = dato.split(" ")
-    datos = DB.session.query(Cancion).filter(Categoria.nombre.in_(dato), Categoria.canciones)
+    if type(dato) is str:
+        dato = dato.split(" ")
+
+    datos = DB.session.query(Cancion) \
+        .filter(Categoria.nombre.in_(dato), Categoria.canciones)
 
     return datos
 
@@ -367,7 +421,9 @@ def buscar_categorias_list(lista, dato):
     :param lista:
     :return:
     """
-    dato = dato.split(" ")
+    if type(dato) is str:
+        dato = dato.split(" ")
+
     lista = fetch_data_by_id(Lista, int(lista))
     if lista == "error":
         return "Error", False
@@ -380,6 +436,16 @@ def buscar_categorias_list(lista, dato):
 
     datos = [cancion for cancion in datos if cancion in [ass.cancion for ass in lista.apariciones]]
     return datos, True
+
+
+def buscar_usuarios(nombre):
+    """
+    Devuelve los usuarios cuyo nombre contiene la subcadena buscada
+    :param nombre:
+    :return:
+    """
+    resultados = DB.session.query(Usuario).filter(Usuario.nombre.ilike('%' + nombre + '%')).all()
+    return resultados
 
 
 def search(dato):
@@ -449,48 +515,57 @@ def list_songs():
     return jsonify(listar("cancion", Cancion))
 
 
-@APP.route('/list_lists', methods=['POST', 'GET'])  # Test DONE
-def list_lists():
+@APP.route('/list_<tipo>', methods=['POST', 'GET'])  # Test DONE
+def listing(tipo):
     """
-    Lista en formato json las listas de reproducción y su información básica de la base de datos
+    Lista en formato json la informacion basica del tipo especificado
     Parametros de la peticion:
         - usuario: usuario cuyas listas se van a mostrar
     :return:
     """
-    usuario = leer_datos(request, ["usuario"])
-    return jsonify(listar("lista", None, usuario))
+    resultado = None
+
+    if tipo == "albums":
+        resultado = listar("album", Album)
+
+    elif tipo == "artists":
+        resultado = listar("artista", Artista)
+
+    elif tipo == "podcast":
+        usuario = leer_datos(request, ["email"])
+        resultado = listar("podcast", None, usuario)
+
+    elif tipo == "categories":
+        resultado = listar("categoria", Categoria)
+
+    elif tipo == "suscriptions":
+        usuario = leer_datos(request, ["email"])
+        resultado = listar("suscripcion", None, usuario)
+
+    elif tipo == "lists":  # Listas de reproduccion
+        usuario = leer_datos(request, ["usuario"])
+        resultado = listar("lista", None, usuario)
+
+    elif tipo == "friends":
+        usuario = leer_datos(request, ["email"])
+        resultado = listar("amistades", None, usuario)
+
+    elif tipo == "peticiones_recibidas":
+        usuario = leer_datos(request, ["email"])
+        resultado = listar("peticiones_recibidas", None, usuario)
+
+    elif tipo == "peticiones_enviadas":
+        usuario = leer_datos(request, ["email"])
+        resultado = listar("peticiones_enviadas", None, usuario)
+
+    if resultado is None:
+        return "Url incorrecta"
+
+    return jsonify(resultado)
 
 
-@APP.route('/list_albums', methods=['POST', 'GET'])  # Test DONE
-def list_albums():
-    """
-    Lista en formato json los álbumes y su información básica de la base de datos
-    :return:
-    """
-    return jsonify(listar("album", Album))
-
-
-@APP.route('/list_artists', methods=['POST', 'GET'])  # Test DONE
-def list_artist():
-    """
-    Lista en formato json los artistas y su información básica de la base de datos
-    :return:
-    """
-    return jsonify(listar("artista", Artista))
-
-
-@APP.route('/list_podcast', methods=['POST', 'GET'])
-def list_podcast():
-    """
-    Lista en formato json los podcast favoritos de un usuario
-    :return:
-    """
-    usuario = leer_datos(request, ["email"])
-    return jsonify(listar("podcast", None, usuario))
-
-
-@APP.route('/list_data', methods=['POST', 'GET'])  # Test DONE
-def list_data_list():
+@APP.route('/list_<tipo>_data', methods=['POST', 'GET'])  # Test DONE
+def list_data(tipo):
     """
     Lista en formato json la información de una lista de reproducción incluyendo las canciones
     que la componen
@@ -498,32 +573,24 @@ def list_data_list():
         - lista
     :return:
     """
-    lista = leer_datos(request, ["lista"])
-    return jsonify(listar_datos("lista", Lista, lista))
+    resultado = None
 
+    if tipo == "albums":
+        album = leer_datos(request, ["album"])
+        resultado = listar_datos("album", Album, album)
 
-@APP.route('/list_albums_data', methods=['POST', 'GET'])
-def list_albums_data():
-    """
-    Lista en formato json la información de un álbum incluyendo las canciones que lo componen
-    Parametros de la peticion:
-        - album
-    :return:
-    """
-    album = leer_datos(request, ["album"])
-    return jsonify(listar_datos("album", Album, album))
+    elif tipo == "artist":
+        artista = leer_datos(request, ["artista"])
+        resultado = listar_datos("artista", Artista, artista)
 
+    elif tipo == "lists":
+        lista = leer_datos(request, ["lista"])
+        resultado = listar_datos("lista", Lista, lista)
 
-@APP.route('/list_artist_data', methods=['POST', 'GET'])
-def list_artist_data():
-    """
-    Lista en formato json la información de un artista incluyendo las canciones que lo componen
-    Parametros de la peticion:
-        - artista
-    :return:
-    """
-    artista = leer_datos(request, ["artista"])
-    return jsonify(listar_datos("artista", Artista, artista))
+    if resultado is None:
+        return "Url incorrecta"
+
+    return jsonify(resultado)
 
 
 @APP.route('/create_list', methods=['POST', 'GET'])  # Test DONE
@@ -753,6 +820,31 @@ def podcast_is_fav():
         return "Error"
 
 
+@APP.route('/is_fav', methods=['POST', 'GET'])
+def is_fav():
+    """
+    Devuleve true si la cancion esta en la lista de favoritos del usuario especificado
+    Parametros de la peticion:
+        - cancion
+        - email
+    :return:
+    """
+    cancion, usuario = leer_datos(request, ["cancion", "email"])
+
+    try:
+        existe = DB.session.query(Lista).filter(Usuario.email == usuario,
+                                                Cancion.id == cancion,
+                                                Lista.nombre == "Favoritos",
+                                                Usuario.listas,
+                                                Lista.apariciones,
+                                                Aparicion.cancion).first()
+
+        return str(existe is not None)
+    except (IntegrityError, OperationalError):
+        DB.session.rollback()
+        return "Error"
+
+
 @APP.route('/search_list', methods=['POST', 'GET'])  # Test DONE
 def buscar_listas():
     """
@@ -877,6 +969,16 @@ def get_user(email):
     return user
 
 
+def send_mail(email, token):
+    msg = Message(
+        "Confirmation Email",
+        body="http://localhost:5000/confirm_email/" + token,
+        recipients=[email],
+        sender=APP.config["MAIL_DEFAULT_SENDER"]
+    )
+    MAIL.send(msg)
+
+
 @APP.route('/register', methods=['POST', 'GET'])
 def registro():
     """
@@ -902,6 +1004,14 @@ def registro():
         DB.session.add(ListaPodcast(nombre="Favoritos",
                                     email_usuario=user.email))
         DB.session.commit()
+
+        print("Todo bien")
+
+        serializer = URLSafeTimedSerializer(APP.config['SECRET_KEY'])
+        token = serializer.dumps(email, salt=APP.config['SECURITY_PASSWORD_SALT'])
+
+        send_mail(email, token)
+
     except (IntegrityError, OperationalError) as error:
         DB.session.rollback()
         if isinstance(error.orig, UniqueViolation):
@@ -911,10 +1021,42 @@ def registro():
 
     except DataError as error:
         DB.session.rollback()
+        print(error)
         if isinstance(error.orig, InvalidDatetimeFormat):
             return "Fecha incorrecta"
 
+    except Exception as error2:
+        print(error2)
+
     return "Success"
+
+
+@APP.route('/confirm_email/<token>', methods=['POST', 'GET'])
+def confirmar(token):
+    expiration = 3600
+    serializer = URLSafeTimedSerializer(APP.config['SECRET_KEY'])
+
+    try:
+        email = serializer.loads(
+            token,
+            salt=APP.config['SECURITY_PASSWORD_SALT'],
+            max_age=expiration
+        )
+
+        user = get_user(email)
+
+        if user.confirmado:
+            return "Ya estaba confirmado"
+        else:
+            user.confirmado = True
+            DB.session.commit()
+
+            return "Usuario " + email + " confirmado correctamente"
+
+    except Exception as e:
+        DB.session.rollback()
+        print(e)
+        return "Error"
 
 
 @APP.route('/delete_user', methods=['POST', 'GET'])
@@ -984,7 +1126,8 @@ def modificar_perfil():
     Modifica los datos de un usuario a partir de los datos recibidos en la peticion.
     Parametros de la peticion:
         - email: email del usuario OBLIGATORIO
-        - password: NO OBLIGATORIO
+        - password: OBLIGATORIO
+        - new_password: NO OBLIGATORIO
         - fecha: formato MM(/ | -)DD(/ | -)AAAA NO OBLIGATORIO
         - nombre: NO OBLIGATORIO
         - pais: NO OBLIGATORIO
@@ -1006,8 +1149,12 @@ def modificar_perfil():
         if usuario is None:
             return "No existe usuario"
 
-        if "password" in etiquetas:
-            usuario.password = datos["password"]
+        contraseña = datos["password"]
+        if usuario.password != contraseña:
+            return "Contraseña incorrecta"
+
+        if "new_password" in etiquetas:
+            usuario.password = datos["new_password"]
 
         if "fecha" in etiquetas:
             lista = datos["fecha"].replace("-", "/").split("/", 3)
@@ -1028,4 +1175,158 @@ def modificar_perfil():
         print(error)
         if isinstance(error.orig, InvalidDatetimeFormat):
             return "Fecha incorrecta"
+        return "Error"
+
+
+@APP.route('/search_users', methods=['POST', 'GET'])
+def search_user():
+    """
+    Busca los usuarios que coinciden con la cadena introducida
+    Parametros de la peticion:
+        - nombre: cadena a buscar
+    :return:
+    """
+    nombre = leer_datos(request, ['nombre'])
+
+    resultados = buscar_usuarios(nombre)
+    usuarios = listar_usuarios(resultados)
+
+    return jsonify(usuarios)
+
+
+@APP.route('/suscription', methods=['POST', 'GET'])
+def suscripcion():
+    """
+    Se sucribe a un artista
+    :return:
+    """
+    usuario, artista = leer_datos(request, ["email", "artista"])
+
+    try:
+        user = get_user(usuario)
+
+        if user is None:
+            return "No existe usuario"
+
+        artist = DB.session.query(Artista).filter_by(nombre=artista).first()
+
+        if artist is None:
+            return "No existe artista"
+
+        user.artistas.append(artist)
+
+        DB.session.add(user)
+        DB.session.commit()
+
+        return "Success"
+
+    except (IntegrityError, OperationalError):
+        DB.session.rollback()
+        return "Error"
+
+
+@APP.route('/unsuscribe', methods=['POST', 'GET'])
+def desuscribir():
+    """
+    Se elimina la suscripcion
+    :return:
+    """
+    usuario, artista = leer_datos(request, ["email", "artista"])
+
+    try:
+        user = get_user(usuario)
+
+        if user is None:
+            return "No existe usuario"
+
+        artist = DB.session.query(Artista).filter_by(nombre=artista).first()
+
+        if artist is None:
+            return "No existe artista"
+
+        user.artistas.remove(artist)
+
+        DB.session.add(user)
+        DB.session.commit()
+
+        return "Success"
+
+    except (IntegrityError, OperationalError):
+        DB.session.rollback()
+        return "Error"
+
+
+@APP.route('/solicitud_amistad', methods=['POST', 'GET'])
+def solicitud_amistad():
+    """
+    Realiza una peticion de amistad
+    :return:
+    """
+    emisor, receptor = leer_datos(request, ["emisor", "receptor"])
+
+    try:
+        emisor = get_user(emisor)
+
+        if emisor is None:
+            return "No existe emisor"
+
+        receptor = get_user(receptor)
+
+        if receptor is None:
+            return "No existe receptor"
+
+        s = Solicitud(email_usuario_notificado=receptor.email,
+                      email_usuario_notificante=emisor.email)
+        DB.session.add(s)
+        DB.session.commit()
+
+        return "Success"
+    except (IntegrityError, OperationalError):
+        DB.session.rollback()
+        return "Error"
+
+
+@APP.route('/responder_peticion', methods=['POST', 'GET'])
+def responder_peticion():
+    peticion, response = leer_datos(request, ['peticion', 'respuesta'])
+
+    try:
+        peticion = DB.session.query(Solicitud).filter_by(id=int(peticion)).first()
+        if peticion is None:
+            return "No existe peticion"
+
+        if response == "Acepto":
+            peticion.notificado.amistades.append(peticion.notificante)
+            peticion.notificante.amistades.append(peticion.notificado)
+
+        DB.session.delete(peticion)
+        DB.session.commit()
+        return "Success"
+    except (IntegrityError, OperationalError) as e:
+        print(e)
+        DB.session.rollback()
+        return "Error"
+
+
+@APP.route('/delete_friend', methods=['POST', 'GET'])
+def eliminar_amigo():
+    usuario, ya_no_amigo = leer_datos(request, ['email', 'amigo'])
+
+    try:
+        usuario = get_user(usuario)
+        if usuario is None:
+            return "No existe usuario"
+
+        ya_no_amigo = get_user(ya_no_amigo)
+        if ya_no_amigo is None:
+            return "No existe amigo"
+
+        usuario.amistades.remove(ya_no_amigo)
+        ya_no_amigo.amistades.remove(usuario)
+
+        DB.session.commit()
+        return "Success"
+    except (IntegrityError, OperationalError) as e:
+        print(e)
+        DB.session.rollback()
         return "Error"
