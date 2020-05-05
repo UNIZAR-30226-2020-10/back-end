@@ -72,10 +72,11 @@ listas = [
 usuarios = [
     Usuario(email='elon@gmail.com', nombre='Elon Musk', password='HgdSUOL8Dst9gKUWtaoXqg==',
             fecha_nacimiento=datetime.datetime(2000, 1, 1), pais='United States of America',
-            foto='https://psoftware.s3.amazonaws.com/usuario_elon-musk.jpeg'),
-    Usuario(email='karen@gmail.com', nombre='Karen Sparck Jones', password='XDNYNrPgHEt5+WoZeB7uQw==',
+            foto='https://psoftware.s3.amazonaws.com/usuario_elon-musk.jpeg', confirmado=True),
+    Usuario(email='karen@gmail.com', nombre='Karen Sparck Jones',
+            password='XDNYNrPgHEt5+WoZeB7uQw==',
             fecha_nacimiento=datetime.datetime(2001, 1, 1), pais='United Kingdom',
-            foto='https://psoftware.s3.amazonaws.com/usuario_karen.png')
+            foto='https://psoftware.s3.amazonaws.com/usuario_karen.png', confirmado=True)
 ]
 
 canciones = [
@@ -119,10 +120,10 @@ listas_podcast = [
     ListaPodcast(nombre='Favoritos')
 ]
 
-"""solicitudes = [
+solicitudes = [
     Solicitud(email_usuario_notificante=usuarios[0].email, email_usuario_notificado=usuarios[
-    1].email)
-]"""
+        1].email)
+]
 
 listas_compartidas = [
     ListaCompartida(email_usuario_notificante=usuarios[0].email, email_usuario_notificado=usuarios[1].email,
@@ -143,7 +144,7 @@ DB.session.add_all(artistas)
 DB.session.add_all(albumes)
 DB.session.add_all(listas)
 DB.session.add_all(usuarios)
-# DB.session.add_all(solicitudes)
+DB.session.add_all(solicitudes)
 DB.session.add_all(listas_compartidas)
 DB.session.add_all(canciones_compartidas)
 DB.session.add_all(canciones)
@@ -212,8 +213,8 @@ for i in range(len(canciones)):
     insert_to_list(listas[4].apariciones, canciones[i])
 
 # Relacion amistad
-"""usuarios[0].amistades.append(usuarios[1])
-usuarios[1].amistades.append(usuarios[0])"""
+usuarios[0].amistades.append(usuarios[1])
+usuarios[1].amistades.append(usuarios[0])
 
 # Relaciones 1:N
 
