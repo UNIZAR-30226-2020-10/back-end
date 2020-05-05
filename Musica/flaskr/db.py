@@ -13,7 +13,7 @@ from sqlalchemy.exc import IntegrityError
 
 from flaskr import create_app
 
-APP = create_app()
+APP, MAIL = create_app()
 
 # Configuracion PostgreSQL
 
@@ -191,6 +191,7 @@ class Usuario(DB.Model):
     foto = DB.Column(DB.String(100), default='https://psoftware.s3.amazonaws.com/user_default.jpg')
     token = DB.Column(DB.String(), unique=True)
     fcm_token = DB.Column(DB.String(), unique=True)
+    confirmado = DB.Column(DB.Boolean(), default=False)
 
     # MANY TO MANY relationships
     # Usuario <-> Artista 'suscrito'

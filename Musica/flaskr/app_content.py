@@ -5,11 +5,13 @@ Fichero que contiene la API de la aplicación TuneIT y sus funciones auxiliares
 """
 import datetime
 
-from flask import request, jsonify, render_template
+from flask import request, jsonify
+from itsdangerous import URLSafeTimedSerializer
 from psycopg2.errors import UniqueViolation, InvalidDatetimeFormat
 from sqlalchemy.exc import DataError, OperationalError, IntegrityError
 from flaskr.db import APP, fetch_data_by_id, Lista, Cancion, DB, Categoria, Artista, leer_todo, \
-    Usuario, Aparicion, Album, SeriePodcast, ListaPodcast, Solicitud
+    Usuario, Aparicion, Album, SeriePodcast, ListaPodcast, Solicitud, MAIL
+from flask_mail import Message
 
 
 # pylint: disable=no-member
@@ -206,8 +208,9 @@ def listar_usuarios(lista):
     """
     usuarios = []
     for usuario in lista:
-        dictionary = {"Nombre": usuario.nombre, "Imagen": usuario.foto, "Email": usuario.email}
-        usuarios.append(dictionary)
+        if usuario.confirmado:
+            dictionary = {"Nombre": usuario.nombre, "Imagen": usuario.foto, "Email": usuario.email}
+            usuarios.append(dictionary)
 
     return usuarios
 
@@ -966,6 +969,16 @@ def get_user(email):
     return user
 
 
+def send_mail(email, token):
+    msg = Message(
+        "Confirmation Email",
+        body="http://localhost:5000/confirm_email/" + token,
+        recipients=[email],
+        sender=APP.config["MAIL_DEFAULT_SENDER"]
+    )
+    MAIL.send(msg)
+
+
 @APP.route('/register', methods=['POST', 'GET'])
 def registro():
     """
@@ -991,6 +1004,14 @@ def registro():
         DB.session.add(ListaPodcast(nombre="Favoritos",
                                     email_usuario=user.email))
         DB.session.commit()
+
+        print("Todo bien")
+
+        serializer = URLSafeTimedSerializer(APP.config['SECRET_KEY'])
+        token = serializer.dumps(email, salt=APP.config['SECURITY_PASSWORD_SALT'])
+
+        send_mail(email, token)
+
     except (IntegrityError, OperationalError) as error:
         DB.session.rollback()
         if isinstance(error.orig, UniqueViolation):
@@ -1000,10 +1021,42 @@ def registro():
 
     except DataError as error:
         DB.session.rollback()
+        print(error)
         if isinstance(error.orig, InvalidDatetimeFormat):
             return "Fecha incorrecta"
 
+    except Exception as error2:
+        print(error2)
+
     return "Success"
+
+
+@APP.route('/confirm_email/<token>', methods=['POST', 'GET'])
+def confirmar(token):
+    expiration = 3600
+    serializer = URLSafeTimedSerializer(APP.config['SECRET_KEY'])
+
+    try:
+        email = serializer.loads(
+            token,
+            salt=APP.config['SECURITY_PASSWORD_SALT'],
+            max_age=expiration
+        )
+
+        user = get_user(email)
+
+        if user.confirmado:
+            return "Ya estaba confirmado"
+        else:
+            user.confirmado = True
+            DB.session.commit()
+
+            return "Usuario " + email + " confirmado correctamente"
+
+    except Exception as e:
+        DB.session.rollback()
+        print(e)
+        return "Error"
 
 
 @APP.route('/delete_user', methods=['POST', 'GET'])
