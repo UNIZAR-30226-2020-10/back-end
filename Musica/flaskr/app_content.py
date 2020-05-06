@@ -1334,3 +1334,48 @@ def eliminar_amigo():
         print(e)
         DB.session.rollback()
         return "Error"
+
+
+@APP.route('/set_last_song', methods=['POST', 'GET'])
+def set_ultima_cancion():
+    usuario, cancion, segundo = leer_datos(request, ["email",
+                                                     "cancion",
+                                                     "segundo"])
+
+    try:
+        usuario = get_user(usuario)
+        if usuario is None:
+            return "No existe usuario"
+
+        usuario.id_ultima_cancion = int(cancion)
+        usuario.segundo_ultima_cancion = int(segundo)
+        DB.session.commit()
+
+        return "Success"
+
+    except (IntegrityError, OperationalError) as e:
+        print(e)
+        DB.session.rollback()
+        return "Error"
+
+
+@APP.route('/get_last_song', methods=['POST', 'GET'])
+def get_ultima_cancion():
+    usuario = leer_datos(request, ["email"])
+
+    try:
+        usuario = get_user(usuario)
+        if usuario is None:
+            return "No existe usuario"
+
+        if usuario.ultima_cancion is None:
+            return jsonify({"Cancion": None,
+                            "Segundo": usuario.segundo_ultima_cancion})
+
+        return jsonify({"Cancion": listar_canciones([usuario.ultima_cancion]),
+                        "Segundo": usuario.segundo_ultima_cancion})
+
+    except (IntegrityError, OperationalError) as e:
+        print(e)
+        DB.session.rollback()
+        return "Error"
