@@ -444,7 +444,8 @@ def buscar_usuarios(nombre):
     :param nombre:
     :return:
     """
-    resultados = DB.session.query(Usuario).filter(Usuario.nombre.ilike('%' + nombre + '%')).all()
+    resultados = DB.session.query(Usuario).filter(Usuario.nombre.ilike('%' + nombre + '%'),
+                                                  Usuario.confirmado).all()
     return resultados
 
 
