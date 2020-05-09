@@ -1410,7 +1410,7 @@ def set_token():
 
 @APP.route('/get_token', methods=['POST', 'GET'])
 def get_token():
-    usuario, token = leer_datos(request, ["email", "token"])
+    usuario = leer_datos(request, ["email"])
 
     try:
         usuario = get_user(usuario)
