@@ -209,7 +209,9 @@ def listar_usuarios(lista):
     usuarios = []
     for usuario in lista:
         if usuario.confirmado:
-            dictionary = {"Nombre": usuario.nombre, "Imagen": usuario.foto, "Email": usuario.email}
+            dictionary = {"Nombre": usuario.nombre, "Imagen": usuario.foto, "Email": usuario.email,
+                          "Fecha": usuario.fecha_nacimiento, "Pais": usuario.pais, "Token":
+                              usuario.token}
             usuarios.append(dictionary)
 
     return usuarios
@@ -561,6 +563,8 @@ def listing(tipo):
 
     if resultado is None:
         return "Url incorrecta"
+
+    print(resultado, type(resultado))
 
     return jsonify(resultado)
 
@@ -1279,6 +1283,9 @@ def solicitud_amistad():
         if receptor is None:
             return "No existe receptor"
 
+        if emisor == receptor:
+            return "Mismo usuario"
+
         s = Solicitud(email_usuario_notificado=receptor.email,
                       email_usuario_notificante=emisor.email)
         DB.session.add(s)
@@ -1374,6 +1381,43 @@ def get_ultima_cancion():
 
         return jsonify({"Cancion": listar_canciones([usuario.ultima_cancion]),
                         "Segundo": usuario.segundo_ultima_cancion})
+
+    except (IntegrityError, OperationalError) as e:
+        print(e)
+        DB.session.rollback()
+        return "Error"
+
+
+@APP.route('/set_token', methods=['POST', 'GET'])
+def set_token():
+    usuario, token = leer_datos(request, ["email", "token"])
+
+    try:
+        usuario = get_user(usuario)
+        if usuario is None:
+            return "No existe usuario"
+
+        usuario.token = token
+        DB.session.commit()
+
+        return "Success"
+
+    except (IntegrityError, OperationalError) as e:
+        print(e)
+        DB.session.rollback()
+        return "Error"
+
+
+@APP.route('/get_token', methods=['POST', 'GET'])
+def get_token():
+    usuario, token = leer_datos(request, ["email", "token"])
+
+    try:
+        usuario = get_user(usuario)
+        if usuario is None:
+            return "No existe usuario"
+
+        return jsonify(usuario.token)
 
     except (IntegrityError, OperationalError) as e:
         print(e)

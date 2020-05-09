@@ -189,7 +189,7 @@ class Usuario(DB.Model):
     fecha_nacimiento = DB.Column(DB.DateTime)
     pais = DB.Column(DB.String(40))
     foto = DB.Column(DB.String(100), default='https://psoftware.s3.amazonaws.com/user_default.jpg')
-    token = DB.Column(DB.String(), unique=True)
+    token = DB.Column(DB.String(200), unique=True)
     confirmado = DB.Column(DB.Boolean(), default=False)
 
     # MANY TO MANY relationships
