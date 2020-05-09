@@ -190,7 +190,6 @@ class Usuario(DB.Model):
     pais = DB.Column(DB.String(40))
     foto = DB.Column(DB.String(100), default='https://psoftware.s3.amazonaws.com/user_default.jpg')
     token = DB.Column(DB.String(), unique=True)
-    fcm_token = DB.Column(DB.String(), unique=True)
     confirmado = DB.Column(DB.Boolean(), default=False)
 
     # MANY TO MANY relationships
