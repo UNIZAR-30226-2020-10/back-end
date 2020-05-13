@@ -234,7 +234,8 @@ def listar_listas_compartidas(lista):
     for element in lista:
         res = {"Listas": listar_datos_lista(element.lista), "ID": element.id,
                "Emisor": listar_usuarios([element.notificante]),
-               "Receptor": listar_usuarios([element.notificado])}
+               "Receptor": listar_usuarios([element.notificado]),
+               "Notificacion": element.notificacion}
         dictionary.append(res)
 
     return dictionary
@@ -245,8 +246,9 @@ def listar_canciones_compartidas(lista):
 
     for song in lista:
         res = {"Cancion": listar_datos_cancion(song.cancion), "ID": song.id,
-               "Emisor": song.email_usuario_notificante,
-               "Receptor": song.email_usuario_notificado}
+               "Emisor": listar_usuarios([song.notificante]),
+               "Receptor": listar_usuarios([song.notificado]),
+               "Notificacion": song.notificacion}
         canciones.append(res)
 
     return canciones
@@ -564,6 +566,7 @@ def listing(tipo):
     Lista en formato json la informacion basica del tipo especificado
     Parametros de la peticion:
         - usuario: usuario cuyas listas se van a mostrar
+    :param tipo:
     :return:
     """
     resultado = None
@@ -630,6 +633,7 @@ def list_data(tipo):
     que la componen
     Parametros de la peticion:
         - lista
+    :param tipo:
     :return:
     """
     resultado = None
@@ -1494,7 +1498,12 @@ def get_token():
 
 
 @APP.route('/share_<tipo>', methods=['POST', 'GET'])
-def compartir_lista(tipo):
+def compartir(tipo):
+    """
+    Comparte un elemento de tipo <tipo> desde el emisor al receptor
+    :param tipo:
+    :return:
+    """
     if tipo == "list":
         tabla = ListaCompartida
         tipo_id = ListaCompartida.id_lista
@@ -1503,7 +1512,8 @@ def compartir_lista(tipo):
         tabla = CancionCompartida
         tipo_id = CancionCompartida.id_cancion
         elemento, emisor, receptor = leer_datos(request, ["cancion", "emisor", "receptor"])
-
+    else:
+        return "Url incorrecta"
     try:
         if emisor == receptor:
             return "Mismo usuario"
@@ -1536,15 +1546,51 @@ def compartir_lista(tipo):
         return "Error"
 
 
+@APP.route('/unnotify_<tipo>', methods=['POST', 'GET'])
+def quitar_notificacion(tipo):
+    """
+    Quita el flag notificacion del elemento compartido
+    :param tipo:
+    :return:
+    """
+    if tipo == "list":
+        tabla = ListaCompartida
+    elif tipo == "song":
+        tabla = CancionCompartida
+    else:
+        return "Url incorrecta"
+    elemento = leer_datos(request, ["elemento"])
+    try:
+
+        compartido = DB.session.query(tabla).filter_by(id=elemento).first()
+        if compartido is None:
+            return "No existe"
+
+        compartido.notificacion = False
+
+        DB.session.commit()
+        return "Success"
+    except (IntegrityError, OperationalError) as e:
+        print(e)
+        DB.session.rollback()
+        return "Error"
+
+
 @APP.route('/unshare_<tipo>', methods=['POST', 'GET'])
 def dejar_compartir_lista(tipo):
+    """
+    Elimina la comparticion del elemento
+    :param tipo:
+    :return:
+    """
     if tipo == "list":
         tabla = ListaCompartida
         elemento = leer_datos(request, ["lista"])
     elif tipo == "song":
         tabla = CancionCompartida
         elemento = leer_datos(request, ["cancion"])
-
+    else:
+        return "Url incorrecta"
     try:
         compartida = DB.session.query(tabla).filter_by(id=elemento).first()
 

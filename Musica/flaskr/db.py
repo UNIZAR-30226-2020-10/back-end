@@ -272,6 +272,7 @@ class ListaCompartida(DB.Model):
     Tipo de entidad Notificacion que representa una compartición de una loista de producción
     """
     id = DB.Column(DB.Integer, primary_key=True)
+    notificacion = DB.Column(DB.Boolean, default=True)
 
     # MANY TO ONE relationships
     # ListaCompartida <- Lista 'compartida'
@@ -298,6 +299,7 @@ class CancionCompartida(DB.Model):
     Tipo de entidad Notificación que representa una compartición de canción
     """
     id = DB.Column(DB.Integer, primary_key=True)
+    notificacion = DB.Column(DB.Boolean, default=True)
 
     # MANY TO ONE relationships
     # CancionCompartida <- Usuario
