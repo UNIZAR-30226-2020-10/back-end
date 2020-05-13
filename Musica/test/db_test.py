@@ -37,28 +37,28 @@ albumes = [
 ]
 
 artistas = [
-    Artista(nombre='Alan Walker', fecha_nacimiento=datetime.datetime(1990, 1, 2)),
-    Artista(nombre='Cartoon', fecha_nacimiento=datetime.datetime(1991, 5, 1)),
-    Artista(nombre='Deaf kev', fecha_nacimiento=datetime.datetime(1990, 1, 2)),
-    Artista(nombre='Different heaven', fecha_nacimiento=datetime.datetime(1990, 1, 2)),
-    Artista(nombre='Disfigure', fecha_nacimiento=datetime.datetime(1990, 1, 2)),
-    Artista(nombre='Electro light', fecha_nacimiento=datetime.datetime(1990, 1, 2)),
-    Artista(nombre='Electonomia', fecha_nacimiento=datetime.datetime(1990, 1, 2)),
-    Artista(nombre='Janji', fecha_nacimiento=datetime.datetime(1990, 1, 2)),
-    Artista(nombre='Spekterm', fecha_nacimiento=datetime.datetime(1990, 1, 2)),
-    Artista(nombre='Tobu', fecha_nacimiento=datetime.datetime(1990, 1, 2)),
-    Artista(nombre='Daniel levi', fecha_nacimiento=datetime.datetime(1990, 1, 2)),
-    Artista(nombre='Coleman trapp', fecha_nacimiento=datetime.datetime(1990, 1, 2)),
-    Artista(nombre='Ehde', fecha_nacimiento=datetime.datetime(1990, 1, 2)),
-    Artista(nombre='Johnning', fecha_nacimiento=datetime.datetime(1990, 1, 2))
+    Artista(nombre='Alan Walker', fecha_nacimiento=datetime.datetime(1990, 1, 2),foto='https://psoftware.s3.amazonaws.com/alan_walker.jpg'),
+    Artista(nombre='Cartoon', fecha_nacimiento=datetime.datetime(1991, 5, 1), foto='https://psoftware.s3.amazonaws.com/cartoon.png'),
+    Artista(nombre='Deaf kev', fecha_nacimiento=datetime.datetime(1990, 1, 2), foto='https://psoftware.s3.amazonaws.com/deaf_kev.jpg'),
+    Artista(nombre='Different heaven', fecha_nacimiento=datetime.datetime(1990, 1, 2), foto='https://psoftware.s3.amazonaws.com/different_heaven.jpeg'),
+    Artista(nombre='Disfigure', fecha_nacimiento=datetime.datetime(1990, 1, 2), foto='https://psoftware.s3.amazonaws.com/disfigure.jpg'),
+    Artista(nombre='Electro light', fecha_nacimiento=datetime.datetime(1990, 1, 2), foto='https://psoftware.s3.amazonaws.com/electro_light.jpeg'),
+    Artista(nombre='Electonomia', fecha_nacimiento=datetime.datetime(1990, 1, 2), foto='https://psoftware.s3.amazonaws.com/electronomia.jpeg'),
+    Artista(nombre='Janji', fecha_nacimiento=datetime.datetime(1990, 1, 2), foto='https://psoftware.s3.amazonaws.com/janji.jpg'),
+    Artista(nombre='Spekterm', fecha_nacimiento=datetime.datetime(1990, 1, 2), foto='https://psoftware.s3.amazonaws.com/spektrem.jpg'),
+    Artista(nombre='Tobu', fecha_nacimiento=datetime.datetime(1990, 1, 2), foto='https://psoftware.s3.amazonaws.com/tobu.jpg'),
+    Artista(nombre='Daniel levi', fecha_nacimiento=datetime.datetime(1990, 1, 2), foto='https://psoftware.s3.amazonaws.com/daniel_levi.jpg'),
+    Artista(nombre='Coleman trapp', fecha_nacimiento=datetime.datetime(1990, 1, 2), foto='https://psoftware.s3.amazonaws.com/coleman_trapp.jpg'),
+    Artista(nombre='Ehde', fecha_nacimiento=datetime.datetime(1990, 1, 2), foto='https://psoftware.s3.amazonaws.com/ehde.png'),
+    Artista(nombre='Johnning', fecha_nacimiento=datetime.datetime(1990, 1, 2), foto='https://psoftware.s3.amazonaws.com/johnning.jpeg')
 ]
 
 categorias = [
-    Categoria(nombre='Rock', descripcion='Categoria Rock'),
-    Categoria(nombre='Pop', descripcion='Categoria Pop'),
-    Categoria(nombre='EDM', descripcion='Categoria EDM'),
-    Categoria(nombre='Electronica', descripcion='Categoria Electronic'),
-    Categoria(nombre='Clasica', descripcion='Categoria Clasica'),
+    Categoria(nombre='Rock', descripcion='Categoria Rock', foto='https://psoftware.s3.amazonaws.com/rock.png'),
+    Categoria(nombre='Pop', descripcion='Categoria Pop', foto='https://psoftware.s3.amazonaws.com/pop.png'),
+    Categoria(nombre='Indie', descripcion='Categoria EDM', foto='https://psoftware.s3.amazonaws.com/indie.png'),
+    Categoria(nombre='Electronic', descripcion='Categoria Electronic', foto='https://psoftware.s3.amazonaws.com/electronic.png'),
+    Categoria(nombre='Hip-hop', descripcion='Categoria Clasica', foto='https://psoftware.s3.amazonaws.com/hip-hop.png'),
 ]
 
 listas = [
