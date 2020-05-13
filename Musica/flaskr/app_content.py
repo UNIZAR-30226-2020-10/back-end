@@ -10,7 +10,8 @@ from itsdangerous import URLSafeTimedSerializer
 from psycopg2.errors import UniqueViolation, InvalidDatetimeFormat
 from sqlalchemy.exc import DataError, OperationalError, IntegrityError
 from flaskr.db import APP, fetch_data_by_id, Lista, Cancion, DB, Categoria, Artista, leer_todo, \
-    Usuario, Aparicion, Album, SeriePodcast, ListaPodcast, Solicitud, MAIL
+    Usuario, Aparicion, Album, SeriePodcast, ListaPodcast, Solicitud, MAIL, ListaCompartida, \
+    CancionCompartida
 from flask_mail import Message
 
 
@@ -77,6 +78,14 @@ def listar(tipo, tabla, usuario=None):
                 dictionary = listar_peticiones(usuario.solicitudes_recibidas)
             elif tipo == "peticiones_enviadas":
                 dictionary = listar_peticiones(usuario.solicitudes_enviadas)
+            elif tipo == "listas_compartidas":
+                dictionary = listar_listas_compartidas(usuario.listas_enviadas)
+            elif tipo == "listas_compartidas_conmigo":
+                dictionary = listar_listas_compartidas(usuario.listas_recibidas)
+            elif tipo == "canciones_compartidas":
+                dictionary = listar_canciones_compartidas(usuario.canciones_enviadas)
+            elif tipo == "canciones_compartidas_conmigo":
+                dictionary = listar_canciones_compartidas(usuario.canciones_recibidas)
             else:
                 dictionary = listar_listas(usuario.listas)
 
@@ -116,14 +125,7 @@ def listar_canciones(canciones):
     lista = []
 
     for song in canciones:
-        dictionary = {"ID": song.id, "Nombre": song.nombre, "Artistas": []}
-        for artist in song.artistas:
-            dictionary["Artistas"].append(artist.nombre)
-        dictionary["Album"] = song.nombre_album
-        dictionary["Imagen"] = song.album.foto
-        dictionary["URL"] = song.path
-        dictionary["Categorias"] = [categoria.nombre for categoria in song.categorias]
-        lista.append(dictionary)
+        lista.append(listar_datos_cancion(song))
 
     return lista
 
@@ -227,6 +229,29 @@ def listar_peticiones(lista):
     return peticiones
 
 
+def listar_listas_compartidas(lista):
+    dictionary = []
+    for element in lista:
+        res = {"Listas": listar_datos_lista(element.lista), "ID": element.id,
+               "Emisor": listar_usuarios([element.notificante]),
+               "Receptor": listar_usuarios([element.notificado])}
+        dictionary.append(res)
+
+    return dictionary
+
+
+def listar_canciones_compartidas(lista):
+    canciones = []
+
+    for song in lista:
+        res = {"Cancion": listar_datos_cancion(song.cancion), "ID": song.id,
+               "Emisor": song.email_usuario_notificante,
+               "Receptor": song.email_usuario_notificado}
+        canciones.append(res)
+
+    return canciones
+
+
 def listar_datos(tipo, tabla, dato):
     """
     Lista los datos de un elemento de tipo <tipo> con id <dato>
@@ -266,6 +291,18 @@ def listar_datos(tipo, tabla, dato):
         dict_res = listar_datos_lista(res, data)
 
     return dict_res
+
+
+def listar_datos_cancion(cancion):
+    dictionary = {"ID": cancion.id, "Nombre": cancion.nombre, "Artistas": []}
+    for artist in cancion.artistas:
+        dictionary["Artistas"].append(artist.nombre)
+    dictionary["Album"] = cancion.nombre_album
+    dictionary["Imagen"] = cancion.album.foto
+    dictionary["URL"] = cancion.path
+    dictionary["Categorias"] = [categoria.nombre for categoria in cancion.categorias]
+
+    return dictionary
 
 
 def listar_datos_lista(listas, canciones=None):
@@ -466,7 +503,15 @@ def search(dato):
 
     datos = canciones.union(albumes, artista)
 
-    return datos
+    # -----------------------------------------------------------------------------------
+
+    albums = DB.session.query(Album).filter(Album.nombre.ilike('%' + dato + '%')).all()
+
+    # -----------------------------------------------------------------------------------
+
+    artistas = DB.session.query(Artista).filter(Artista.nombre.ilike('%' + dato + '%')).all()
+
+    return datos, albums, artistas
 
 
 def search_in_list(lista, dato):
@@ -546,7 +591,7 @@ def listing(tipo):
         resultado = listar("suscripcion", None, usuario)
 
     elif tipo == "lists":  # Listas de reproduccion
-        usuario = leer_datos(request, ["usuario"])
+        usuario = leer_datos(request, ["email"])
         resultado = listar("lista", None, usuario)
 
     elif tipo == "friends":
@@ -561,10 +606,24 @@ def listing(tipo):
         usuario = leer_datos(request, ["email"])
         resultado = listar("peticiones_enviadas", None, usuario)
 
+    elif tipo == "listas_compartidas":
+        usuario = leer_datos(request, ["email"])
+        resultado = listar("listas_compartidas", None, usuario)
+
+    elif tipo == "listas_compartidas_conmigo":
+        usuario = leer_datos(request, ["email"])
+        resultado = listar("listas_compartidas_conmigo", None, usuario)
+
+    elif tipo == "canciones_compartidas":
+        usuario = leer_datos(request, ["email"])
+        resultado = listar("canciones_compartidas", None, usuario)
+
+    elif tipo == "canciones_compartidas_conmigo":
+        usuario = leer_datos(request, ["email"])
+        resultado = listar("canciones_compartidas_conmigo", None, usuario)
+
     if resultado is None:
         return "Url incorrecta"
-
-    print(resultado, type(resultado))
 
     return jsonify(resultado)
 
@@ -608,7 +667,7 @@ def crear_lista():
         - usuario
     :return:
     """
-    lista, desc, usuario = leer_datos(request, ["lista", "desc", "usuario"])
+    lista, desc, usuario = leer_datos(request, ["lista", "desc", "email"])
 
     if lista == "Favoritos":
         return "No favoritos"
@@ -658,6 +717,11 @@ def add_to_list():
     data_cancion, data_list, msg = obtain_song_list(int(lista), int(cancion))
     if data_cancion is not None and data_list is not None:
         try:
+            existe = [ele for ele in data_list if ele.cancion == data_cancion]
+
+            if existe:
+                return "Ya existe"
+
             data_list.apariciones.append(
                 Aparicion(cancion=data_cancion, orden=len(data_list.apariciones)))
             DB.session.commit()
@@ -858,7 +922,7 @@ def buscar_listas():
         - lista
     :return:
     """
-    lista, usuario = leer_datos(request, ["lista", "usuario"])
+    lista, usuario = leer_datos(request, ["lista", "email"])
     listas = search_lista(lista, usuario)
     result = listar_listas(listas)
     return jsonify(result)
@@ -873,9 +937,11 @@ def buscar_general():
     :return:
     """
     dato = leer_datos(request, ["nombre"])
-    res = search(dato)
-    res = listar_canciones(res)
-    return jsonify(res)
+    canciones, albums, artistas = search(dato)
+    canciones = listar_canciones(canciones)
+    albums = listar_albums(albums)
+    artistas = listar_artistas(artistas)
+    return jsonify({"Canciones": canciones, "Albums": albums, "Artistas": artistas})
 
 
 @APP.route('/search_in_list', methods=['POST', 'GET'])  # Test DONE
@@ -1008,7 +1074,8 @@ def registro():
     try:
         DB.session.add(user)
         DB.session.add(Lista(nombre="Favoritos", descripcion="Tus canciones favoritas",
-                             email_usuario=user.email, foto='https://psoftware.s3.amazonaws.com/favoritos.png'))
+                             email_usuario=user.email,
+                             foto='https://psoftware.s3.amazonaws.com/favoritos.png'))
         DB.session.add(ListaPodcast(nombre="Favoritos",
                                     email_usuario=user.email))
         DB.session.commit()
@@ -1286,6 +1353,12 @@ def solicitud_amistad():
         if emisor == receptor:
             return "Mismo usuario"
 
+        s = DB.session.query(Solicitud).filter(Solicitud.notificante == emisor,
+                                               Solicitud.notificado == receptor).first()
+
+        if s is not None:
+            return "Ya hay una solicitud pendiente"
+
         s = Solicitud(email_usuario_notificado=receptor.email,
                       email_usuario_notificante=emisor.email)
         DB.session.add(s)
@@ -1418,6 +1491,75 @@ def get_token():
             return "No existe usuario"
 
         return jsonify(usuario.token)
+
+    except (IntegrityError, OperationalError) as e:
+        print(e)
+        DB.session.rollback()
+        return "Error"
+
+
+@APP.route('/share_<tipo>', methods=['POST', 'GET'])
+def compartir_lista(tipo):
+    if tipo == "list":
+        tabla = ListaCompartida
+        tipo_id = ListaCompartida.id_lista
+        elemento, emisor, receptor = leer_datos(request, ["lista", "emisor", "receptor"])
+    elif tipo == "song":
+        tabla = CancionCompartida
+        tipo_id = CancionCompartida.id_cancion
+        elemento, emisor, receptor = leer_datos(request, ["cancion", "emisor", "receptor"])
+
+    try:
+        if emisor == receptor:
+            return "Mismo usuario"
+
+        compartida = DB.session.query(tabla).filter(
+            tabla.email_usuario_notificado == receptor,
+            tabla.email_usuario_notificante == emisor,
+            tipo_id == elemento).first()
+
+        if compartida is not None:
+            return "Elemento ya compartida con ese usuario"
+
+        if tipo == "list":
+            compartida = tabla(id_lista=elemento,
+                               email_usuario_notificado=receptor,
+                               email_usuario_notificante=emisor)
+        elif tipo == "song":
+            compartida = tabla(id_cancion=elemento,
+                               email_usuario_notificado=receptor,
+                               email_usuario_notificante=emisor)
+
+        DB.session.add(compartida)
+        DB.session.commit()
+
+        return "Success"
+
+    except (IntegrityError, OperationalError) as e:
+        print(e)
+        DB.session.rollback()
+        return "Error"
+
+
+@APP.route('/unshare_<tipo>', methods=['POST', 'GET'])
+def dejar_compartir_lista(tipo):
+    if tipo == "list":
+        tabla = ListaCompartida
+        elemento = leer_datos(request, ["lista"])
+    elif tipo == "song":
+        tabla = CancionCompartida
+        elemento = leer_datos(request, ["cancion"])
+
+    try:
+        compartida = DB.session.query(tabla).filter_by(id=elemento).first()
+
+        if compartida is None:
+            return "No existe"
+
+        DB.session.delete(compartida)
+        DB.session.commit()
+
+        return "Success"
 
     except (IntegrityError, OperationalError) as e:
         print(e)
