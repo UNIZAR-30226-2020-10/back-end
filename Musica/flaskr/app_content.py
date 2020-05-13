@@ -196,7 +196,7 @@ def listar_categorias(lista):
     """
     categorias = []
     for categoria in lista:
-        categorias.append(categoria.nombre)
+        categorias.append({"Nombre": categoria.nombre, "Imagen": categoria.foto})
 
     return categorias
 
@@ -712,7 +712,7 @@ def add_to_list():
     data_cancion, data_list, msg = obtain_song_list(int(lista), int(cancion))
     if data_cancion is not None and data_list is not None:
         try:
-            existe = [ele for ele in data_list if ele.cancion == data_cancion]
+            existe = [ele for ele in data_list.apariciones if ele.cancion == data_cancion]
 
             if existe:
                 return "Ya existe"

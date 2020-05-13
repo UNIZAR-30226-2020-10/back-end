@@ -164,7 +164,8 @@ def get_single_album_esperado(album):
 
 def get_single_artist_esperado(artista):
     return [{"Nombre": artista.nombre,
-             "Pais": artista.pais}]
+             "Pais": artista.pais,
+             "Imagen": artista.foto}]
 
 
 class MyTestCase(unittest.TestCase):
@@ -196,7 +197,7 @@ class MyTestCase(unittest.TestCase):
     def test_list_lists(self):
         lista, usuario = insert_lista_test()
 
-        res_esperado = [{"ID": lista.id, "Nombre": lista.nombre, "Imagen": "default",
+        res_esperado = [{"ID": lista.id, "Nombre": lista.nombre, "Imagen": lista.foto,
                          "Desc": lista.descripcion}]
         comprobar_json(self, 'http://localhost:5000/list_lists?email=%s' %
                        usuario.email, res_esperado)
@@ -222,7 +223,7 @@ class MyTestCase(unittest.TestCase):
         DB.session.commit()
 
         res_esperado = {"ID": lista.id, "Nombre": lista.nombre,
-                        "Imagen": lista.apariciones[0].cancion.album.foto,
+                        "Imagen": lista.foto,
                         "Desc": lista.descripcion,
                         "Canciones": get_single_song_esperado(cancion)}
         comprobar_json(self, 'http://localhost:5000/list_lists_data?lista=%s' % lista.id,
@@ -236,7 +237,7 @@ class MyTestCase(unittest.TestCase):
         usuario = insertar_usuario()
 
         status, res = curl(
-            'http://localhost:5000/create_list?lista=TEST_LIST&desc=TEST_DESC&usuario=%s' %
+            'http://localhost:5000/create_list?lista=TEST_LIST&desc=TEST_DESC&email=%s' %
             usuario.email)
         self.assertRegex(str(status), '2[0-9][0-9]', "Peticion no exitosa")
 
@@ -298,9 +299,9 @@ class MyTestCase(unittest.TestCase):
     def test_search_list(self):
         lista, usuario = insert_lista_test()
 
-        res_esperado = [{"ID": lista.id, "Nombre": lista.nombre, "Imagen": "default",
+        res_esperado = [{"ID": lista.id, "Nombre": lista.nombre, "Imagen": lista.foto,
                          "Desc": lista.descripcion}]
-        comprobar_json(self, 'http://localhost:5000/search_list?lista=%s&usuario=%s'
+        comprobar_json(self, 'http://localhost:5000/search_list?lista=%s&email=%s'
                        % (lista.nombre, usuario.email), res_esperado)
 
     def test_search_song_by_album(self):
