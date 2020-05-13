@@ -114,6 +114,7 @@ class Categoria(DB.Model):
     """
     nombre = DB.Column(DB.String(20), primary_key=True)
     descripcion = DB.Column(DB.String(100))
+    foto = DB.Column(DB.String(150), default='https://psoftware.s3.amazonaws.com/LogoAppFondoEscalaGrises.png')
 
     # MANY TO MANY relationships
     # Categoria <-> Cancion 'comprende'
@@ -128,6 +129,7 @@ class Artista(DB.Model):
     fecha_nacimiento = DB.Column(DB.DateTime)
     pais = DB.Column(DB.String(40))
     alias = DB.Column(DB.String(20))
+    foto = DB.Column(DB.String(150), default='https://psoftware.s3.amazonaws.com/LogoAppFondoEscalaGrises.png')
 
     # MANY TO MANY relationships
     # Artista <-> Cancion 'compone'
@@ -145,7 +147,7 @@ class Album(DB.Model):
     nombre = DB.Column(DB.String(20), primary_key=True)
     descripcion = DB.Column(DB.String(100))
     fecha = DB.Column(DB.DateTime)
-    foto = DB.Column(DB.String(100), default='https://psoftware.s3.amazonaws.com/album_defecto.jpg')
+    foto = DB.Column(DB.String(150), default='https://psoftware.s3.amazonaws.com/LogoAppFondoEscalaGrises.png')
 
     # MANY TO MANY relationships
     # Album <-> Artista 'publica'
@@ -163,6 +165,7 @@ class Lista(DB.Model):
     id = DB.Column(DB.Integer, primary_key=True)
     nombre = DB.Column(DB.String(20), nullable=False)
     descripcion = DB.Column(DB.String(100))
+    foto = DB.Column(DB.String(150), default='https://psoftware.s3.amazonaws.com/LogoAppFondoEscalaGrises.png')
 
     # MANY TO MANY relationships
     # Lista <-> Cancion 'aparece' Association Object: Aparicion
@@ -188,7 +191,7 @@ class Usuario(DB.Model):
     password = DB.Column(DB.String, nullable=False)
     fecha_nacimiento = DB.Column(DB.DateTime)
     pais = DB.Column(DB.String(40))
-    foto = DB.Column(DB.String(100), default='https://psoftware.s3.amazonaws.com/user_default.jpg')
+    foto = DB.Column(DB.String(150), default='https://psoftware.s3.amazonaws.com/user_default.jpg')
     token = DB.Column(DB.String(200), unique=True)
     confirmado = DB.Column(DB.Boolean(), default=False)
 
