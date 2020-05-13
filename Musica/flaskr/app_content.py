@@ -1008,7 +1008,7 @@ def registro():
     try:
         DB.session.add(user)
         DB.session.add(Lista(nombre="Favoritos", descripcion="Tus canciones favoritas",
-                             email_usuario=user.email))
+                             email_usuario=user.email, foto='https://psoftware.s3.amazonaws.com/favoritos.png'))
         DB.session.add(ListaPodcast(nombre="Favoritos",
                                     email_usuario=user.email))
         DB.session.commit()
