@@ -320,24 +320,18 @@ def listar_datos_lista(listas, canciones=None):
     :param canciones:
     :return:
     """
-    dictionary = {"ID": listas.id, "Nombre": listas.nombre, "Desc": listas.descripcion}
+    dictionary = {"ID": listas.id,
+                  "Nombre": listas.nombre,
+                  "Desc": listas.descripcion,
+                  "Imagen": listas.foto}
 
     # Canciones es una lista de las canciones ordenadas según el gusto del usuario
     if canciones is not None:
         print(canciones)
         if canciones:
             dictionary["Canciones"] = listar_canciones([ass.cancion for ass in canciones])
-            dictionary["Imagen"] = canciones[0].cancion.album.foto
         else:
             dictionary["Canciones"] = []
-            dictionary["Imagen"] = "default"
-
-    else:
-        if not listas.apariciones:
-            dictionary["Imagen"] = "default"
-        else:
-            dictionary["Imagen"] = \
-                [ass.cancion.album.foto for ass in listas.apariciones if ass.orden == 0][0]
 
     return dictionary
 
@@ -381,7 +375,8 @@ def listar_datos_artistas(artista, datos=False):
     :return:
     """
     dicty = {"Nombre": artista.nombre,
-             "Pais": artista.pais}
+             "Pais": artista.pais,
+             "Imagen": artista.foto}
 
     if datos:
         dicty["Albumes"] = listar_albums(artista.publicaciones)
