@@ -1352,6 +1352,9 @@ def solicitud_amistad():
         if emisor == receptor:
             return "Mismo usuario"
 
+        if receptor in emisor.amistades:
+            return "Ya son amigos"
+
         s = DB.session.query(Solicitud).filter(Solicitud.notificante == emisor,
                                                Solicitud.notificado == receptor).first()
 
