@@ -4,8 +4,9 @@ Fecha-última_modificación: 23-04-2020
 Fichero que contiene la API de la aplicación TuneIT y sus funciones auxiliares
 """
 import datetime
+import os
 
-from flask import request, jsonify
+from flask import request, jsonify, json
 from itsdangerous import URLSafeTimedSerializer
 from psycopg2.errors import UniqueViolation, InvalidDatetimeFormat
 from sqlalchemy.exc import DataError, OperationalError, IntegrityError
@@ -13,7 +14,7 @@ from flaskr.db import APP, fetch_data_by_id, Lista, Cancion, DB, Categoria, Arti
     Usuario, Aparicion, Album, SeriePodcast, ListaPodcast, Solicitud, MAIL, ListaCompartida, \
     CancionCompartida
 from flask_mail import Message
-
+import boto3
 
 # pylint: disable=no-member
 # BUSQUEDA DE CANCIONES Y LISTAS NOMBRE, ARTISTA, ALBUM / CATEGORIAS
@@ -1613,3 +1614,29 @@ def dejar_compartir_lista(tipo):
         print(e)
         DB.session.rollback()
         return "Error"
+
+
+@APP.route('/sign_s3/')
+def sign_s3():
+    s3_bucket = os.environ.get('S3_BUCKET')
+
+    file_name = request.args.get('file_name')
+    file_type = request.args.get('file_type')
+
+    s3 = boto3.client('s3')
+
+    presigned_post = s3.generate_presigned_post(
+        Bucket=s3_bucket,
+        Key=file_name,
+        Fields={"acl": "public-read", "Content-Type": file_type},
+        Conditions=[
+            {"acl": "public-read"},
+            {"Content-Type": file_type}
+        ],
+        ExpiresIn=3600
+    )
+
+    return json.dumps({
+        'data': presigned_post,
+        'url': 'https://%s.s3.amazonaws.com/%s' % (s3_bucket, file_name)
+    })
