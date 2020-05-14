@@ -1414,6 +1414,10 @@ def eliminar_amigo():
         DB.session.rollback()
         return "Error"
 
+    except ValueError:
+        DB.session.rollback()
+        return "Error, la amistad no es reciproca"
+
 
 @APP.route('/set_last_song', methods=['POST', 'GET'])
 def set_ultima_cancion():
