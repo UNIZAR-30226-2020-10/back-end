@@ -5,6 +5,7 @@ Fichero que contiene la API de la aplicación TuneIT y sus funciones auxiliares
 """
 import datetime
 import os
+from functools import wraps
 
 from flask import request, jsonify, json
 from itsdangerous import URLSafeTimedSerializer
@@ -15,11 +16,41 @@ from flaskr.db import APP, fetch_data_by_id, Lista, Cancion, DB, Categoria, Arti
     CancionCompartida
 from flask_mail import Message
 import boto3
+from cryptography.fernet import Fernet
+
+key = "l_lK3Kb8411JZKrY5BQy-DuPtBj5-n5zEx4Rm-zhS6c=l_lK3Kb8411JZKrY5BQy-DuPtBj5-n5zEx4Rm-zhS6c="
+
+fer = Fernet(key.encode())
+
+username_frontend = "frontend"
+pass_front = "password"
+
 
 # pylint: disable=no-member
 # BUSQUEDA DE CANCIONES Y LISTAS NOMBRE, ARTISTA, ALBUM / CATEGORIAS
 # ORDENAR CANCIONES Y LISTAS
 # AÑADIR / ELIMINAR / MODIFICAR CATEGORIAS
+
+
+def login_required(f):
+    @wraps(f)
+    def wrap(*args, **kwargs):
+        if request.authorization is None:
+            return "Acceso no autorizado"
+
+        if fer.decrypt(request.authorization.username.encode()) == username_frontend.encode() and \
+                fer.decrypt(request.authorization.password.encode()) == pass_front.encode():
+            return f(*args, **kwargs)
+        else:
+            return "Acceso no autorizado"
+
+    return wrap
+
+
+@APP.route('/')
+@login_required
+def index():
+    return "Bien"
 
 
 def leer_datos(req, etiquetas):
@@ -696,7 +727,8 @@ def delete_lista():
         element = DB.session.query(Lista).filter_by(id=lista).first()
         DB.session.delete(element)
         DB.session.commit()
-    except (IntegrityError, OperationalError):
+    except (IntegrityError, OperationalError) as e:
+        print(e)
         DB.session.rollback()
         return "Error"
     else:
@@ -1606,6 +1638,37 @@ def dejar_compartir_lista(tipo):
             return "No existe"
 
         DB.session.delete(compartida)
+        DB.session.commit()
+
+        return "Success"
+
+    except (IntegrityError, OperationalError) as e:
+        print(e)
+        DB.session.rollback()
+        return "Error"
+
+
+@APP.route('/add_list', methods=['POST', 'GET'])
+def agregar_lista_compartida():
+    lista, usuario = leer_datos(request, ["lista", "email"])
+
+    try:
+
+        usuario = get_user(usuario)
+        if usuario is None:
+            return "No existe usuario"
+
+        lista = fetch_data_by_id(Lista, int(lista))
+        if lista == "error":
+            return "No existe lista"
+
+        new_list = Lista(nombre=lista.nombre, descripcion=lista.descripcion, foto=lista.foto)
+
+        for aparicion in lista.apariciones:
+            new_list.apariciones.append(Aparicion(id_cancion=aparicion.id_cancion,
+                                                  orden=aparicion.orden))
+
+        usuario.listas.append(new_list)
         DB.session.commit()
 
         return "Success"

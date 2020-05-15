@@ -214,7 +214,7 @@ for i in range(len(canciones)):
 
 # Relacion amistad
 usuarios[0].amistades.append(usuarios[1])
-
+usuarios[1].amistades.append(usuarios[0])
 # Relaciones 1:N
 
 # Relacion compuesto

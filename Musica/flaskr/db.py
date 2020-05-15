@@ -165,7 +165,8 @@ class Lista(DB.Model):
     id = DB.Column(DB.Integer, primary_key=True)
     nombre = DB.Column(DB.String(20), nullable=False)
     descripcion = DB.Column(DB.String(100))
-    foto = DB.Column(DB.String(150), default='https://psoftware.s3.amazonaws.com/LogoAppFondoEscalaGrises.png')
+    foto = DB.Column(DB.String(150),
+                     default='https://psoftware.s3.amazonaws.com/LogoAppFondoEscalaGrises.png')
 
     # MANY TO MANY relationships
     # Lista <-> Cancion 'aparece' Association Object: Aparicion
@@ -174,7 +175,8 @@ class Lista(DB.Model):
 
     # ONE TO MANY relationships
     # Lista -> ListaCompartida 'compartida'
-    comparticiones = DB.relationship('ListaCompartida', back_populates="lista")
+    comparticiones = DB.relationship('ListaCompartida', back_populates="lista",
+                                     cascade="save-update, delete")
 
     # MANY TO ONE relationships
     # Lista <- Usuario 'tiene'
