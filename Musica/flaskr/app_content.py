@@ -1650,6 +1650,13 @@ def dejar_compartir_lista(tipo):
 
 @APP.route('/add_list', methods=['POST', 'GET'])
 def agregar_lista_compartida():
+    """
+    Añade una copia de una lista de reproduccion a tus listas
+    Parametros de la peticion:
+        - lista: id de la lista a copiar
+        - email: email del usuario que recibe la lista
+    :return:
+    """
     lista, usuario = leer_datos(request, ["lista", "email"])
 
     try:
