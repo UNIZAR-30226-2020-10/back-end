@@ -361,7 +361,6 @@ def listar_datos_lista(listas, canciones=None):
 
     # Canciones es una lista de las canciones ordenadas según el gusto del usuario
     if canciones is not None:
-        print(canciones)
         if canciones:
             dictionary["Canciones"] = listar_canciones([ass.cancion for ass in canciones])
         else:
@@ -1112,8 +1111,6 @@ def registro():
                                     email_usuario=user.email))
         DB.session.commit()
 
-        print("Todo bien")
-
         serializer = URLSafeTimedSerializer(APP.config['SECRET_KEY'])
         token = serializer.dumps(email, salt=APP.config['SECURITY_PASSWORD_SALT'])
 
@@ -1466,6 +1463,11 @@ def set_ultima_cancion():
         if usuario is None:
             return "No existe usuario"
 
+        if cancion is None:
+            return "No hay cancion"
+
+        if segundo is None:
+            segundo = 0
         usuario.id_ultima_cancion = int(cancion)
         usuario.segundo_ultima_cancion = int(segundo)
         DB.session.commit()
