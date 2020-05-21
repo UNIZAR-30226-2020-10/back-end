@@ -52,16 +52,16 @@ def insertar_artista(nombre_artista):
     return artista
 
 
-def insertar_usuario():
-    usuario = Usuario(email="prueba@gmail.com", nombre="PRUEBA", password="12345")
+def insertar_usuario(email):
+    usuario = Usuario(email=email, nombre="PRUEBA", password="12345", confirmado=True)
     DB.session.add(usuario)
     DB.session.commit()
 
     return usuario
 
 
-def insert_lista_test():
-    usuario = insertar_usuario()
+def insert_lista_test(email):
+    usuario = insertar_usuario(email)
     lista = Lista(nombre="TEST_LIST", descripcion="TEST_DESC", email_usuario=usuario.email)
     DB.session.add(lista)
     DB.session.commit()
@@ -84,10 +84,10 @@ def insertar_cancion_album(nombre_cancion, nombre_album):
     return cancion, album
 
 
-def insertar_cancion_album_lista(nombre_cancion, nombre_album):
+def insertar_cancion_album_lista(nombre_cancion, nombre_album, email):
     album = insertar_album(nombre_album)
     cancion = insertar_cancion(nombre_cancion, album.nombre)
-    lista, usuario = insert_lista_test()
+    lista, usuario = insert_lista_test(email)
 
     aparicion = Aparicion(cancion=cancion, orden=len(lista.apariciones))
     lista.apariciones.append(aparicion)
@@ -109,10 +109,11 @@ def insertar_cancion_album_artista(nombre_cancion, nombre_album, nombre_artista)
     return cancion, album, artista
 
 
-def insertar_cancion_album_artista_lista(nombre_cancion, nombre_album, nombre_artista):
+def insertar_cancion_album_artista_lista(nombre_cancion, nombre_album, nombre_artista,
+                                         email):
     cancion, album, artista = insertar_cancion_album_artista(nombre_cancion, nombre_album,
                                                              nombre_artista)
-    lista, usuario = insert_lista_test()
+    lista, usuario = insert_lista_test(email)
 
     aparicion = Aparicion(cancion=cancion, orden=len(lista.apariciones))
     lista.apariciones.append(aparicion)
@@ -133,7 +134,8 @@ def comprobar_json(obj, peticion, res_esperado):
 
 
 def buscar_en_lista(tipo, obj):
-    cancion, album, lista, aparicionl, usuario = insertar_cancion_album_lista("Song1", "Album1")
+    cancion, album, lista, aparicionl, usuario = insertar_cancion_album_lista("Song1", "Album1",
+                                                                              "prueba@gmail.com")
 
     if tipo == "cancion":
         tipo = cancion
@@ -155,7 +157,6 @@ def get_single_song_esperado(cancion):
 
 
 def get_single_album_esperado(album):
-
     return [{"Nombre": album.nombre,
              "Artistas": [artista.nombre for artista in album.artistas],
              "fecha": album.fecha.strftime("%A, %d %b %Y"),
@@ -166,6 +167,27 @@ def get_single_artist_esperado(artista):
     return [{"Nombre": artista.nombre,
              "Pais": artista.pais,
              "Imagen": artista.foto}]
+
+
+def get_single_user_esperado(usuario):
+    return [{"Nombre": usuario.nombre, "Imagen": usuario.foto, "Email": usuario.email,
+             "Fecha": usuario.fecha_nacimiento, "Pais": usuario.pais, "Token":
+                 usuario.token}]
+
+
+def get_single_list_esperada(lista):
+    return {'Desc': lista.descripcion,
+            'ID': lista.id,
+            'Imagen': lista.foto,
+            'Nombre': lista.nombre}
+
+
+def compartido_esperado(elemento, elemento_compartido):
+    return [{'ID': elemento_compartido.id,
+             'Emisor': get_single_user_esperado(elemento_compartido.notificante),
+             'Receptor': get_single_user_esperado(elemento_compartido.notificado),
+             'Listas': get_single_list_esperada(elemento),
+             'Notificacion': elemento_compartido.notificacion}]
 
 
 class MyTestCase(unittest.TestCase):
@@ -187,6 +209,9 @@ class MyTestCase(unittest.TestCase):
 
         self.assertEqual(res, "Success", "El mensaje no coindice")
 
+    # ----------------------------------------------------------------------------------------------
+    # LISTAR ELEMENTOS
+
     def test_list(self):
         cancion, album = insertar_cancion_album("Song1", "Album1")
 
@@ -195,7 +220,7 @@ class MyTestCase(unittest.TestCase):
         # delete([cancion, album])
 
     def test_list_lists(self):
-        lista, usuario = insert_lista_test()
+        lista, usuario = insert_lista_test("prueba@gmail.com")
 
         res_esperado = [{"ID": lista.id, "Nombre": lista.nombre, "Imagen": lista.foto,
                          "Desc": lista.descripcion}]
@@ -214,9 +239,88 @@ class MyTestCase(unittest.TestCase):
         res_esperado = get_single_artist_esperado(artista)
         comprobar_json(self, 'http://localhost:5000/list_artists', res_esperado)
 
+    def test_list_podcast(self):
+        usuario = insertar_usuario("prueba@gmail.com")
+        podcast = SeriePodcast(id="a1", nombre="Prueba")
+        lista_podcast = ListaPodcast()
+        lista_podcast.series_podcast.append(podcast)
+
+        usuario.listas_podcast.append(lista_podcast)
+        DB.session.commit()
+
+        res_esperado = [podcast.id]
+        comprobar_json(self, 'http://localhost:5000/list_podcast?email=%s' % usuario.email,
+                       res_esperado)
+
+    def test_list_categorias(self):
+        categoria = insert_categoria()
+
+        res_esperado = [{'Nombre': categoria.nombre, 'Imagen': categoria.foto}]
+        comprobar_json(self, 'http://localhost:5000/list_categories',
+                       res_esperado)
+
+    def test_list_suscripciones(self):
+        cancion, album, artista, lista, aparicion, usuario = insertar_cancion_album_artista_lista(
+            "Cancion", "Album", "Artista", "prueba@gmail.com"
+        )
+        usuario.artistas.append(artista)
+        DB.session.commit()
+
+        res_esperado = get_single_artist_esperado(artista)
+        comprobar_json(self, 'http://localhost:5000/list_suscriptions?email=%s' % usuario.email,
+                       res_esperado)
+
+    def test_list_friends(self):
+        usuario = insertar_usuario("prueba@gmail.com")
+        usuario2 = insertar_usuario("prueba2@gmail.com")
+
+        usuario.amistades.append(usuario2)
+        DB.session.commit()
+
+        res_esperado = get_single_user_esperado(usuario2)
+        comprobar_json(self, 'http://localhost:5000/list_friends?email=%s' % usuario.email,
+                       res_esperado)
+
+    def test_list_peticiones_recibidas(self):
+        usuario = insertar_usuario("prueba@gmail.com")
+        usuario2 = insertar_usuario("prueba2@gmail.com")
+
+        peticion = Solicitud(email_usuario_notificante=usuario.email,
+                             email_usuario_notificado=usuario2.email)
+
+        DB.session.add(peticion)
+        DB.session.commit()
+
+        res_esperado = [{'ID': peticion.id, 'Emisor': get_single_user_esperado(usuario),
+                         'Receptor': get_single_user_esperado(usuario2)}]
+
+        comprobar_json(self, 'http://localhost:5000/list_peticiones_recibidas?email=%s' %
+                       usuario2.email,
+                       res_esperado)
+
+    def test_lista_compartida_conmigo(self):
+        lista, usuario = insert_lista_test("prueba@gmail.com")
+        usuario2 = insertar_usuario("prueba2@gmail.com")
+
+        lista_comp = ListaCompartida(email_usuario_notificado=usuario.email,
+                                     email_usuario_notificante=usuario2.email,
+                                     id_lista=lista.id)
+
+        DB.session.add(lista_comp)
+        DB.session.commit()
+
+        res_esperado = compartido_esperado(lista, lista_comp)
+
+        comprobar_json(self, 'http://localhost:5000/list_listas_compartidas_conmigo?email=%s' %
+                       usuario.email,
+                       res_esperado)
+
+    # ----------------------------------------------------------------------------------------------
+    # LISTAR DATOS DE ELEMENTOS
+
     def test_list_data(self):
         cancion, album = insertar_cancion_album("Song1", "Album1")
-        lista, usuario = insert_lista_test()
+        lista, usuario = insert_lista_test("prueba@gmail.com")
         aparicion = Aparicion(cancion=cancion, orden=len(lista.apariciones))
         lista.apariciones.append(aparicion)
         DB.session.add(lista)
@@ -234,7 +338,7 @@ class MyTestCase(unittest.TestCase):
     # Test list_artists_data
 
     def test_crear_lista(self):
-        usuario = insertar_usuario()
+        usuario = insertar_usuario("prueba@gmail.com")
 
         status, res = curl(
             'http://localhost:5000/create_list?lista=TEST_LIST&desc=TEST_DESC&email=%s' %
@@ -245,7 +349,8 @@ class MyTestCase(unittest.TestCase):
 
     def test_eliminar_lista_con_datos(self):
         cancion, album, lista, aparicion, usuario = insertar_cancion_album_lista("Song1",
-                                                                                 "Album1")
+                                                                                 "Album1",
+                                                                                 "prueba@gmail.com")
 
         status, res = curl('http://localhost:5000/delete_list?lista=%d' % lista.id)
         self.assertRegex(str(status), '2[0-9][0-9]', "Peticion no exitosa")
@@ -253,7 +358,7 @@ class MyTestCase(unittest.TestCase):
         self.assertNotEqual(res, "ERROR", "No se ha eliminado la lista")
 
     def test_eliminar_lista(self):
-        lista, usuario = insert_lista_test()
+        lista, usuario = insert_lista_test("prueba@gmail.com")
 
         status, res = curl('http://localhost:5000/delete_list?lista=%d' % lista.id)
         self.assertRegex(str(status), '2[0-9][0-9]', "Peticion no exitosa")
@@ -261,7 +366,7 @@ class MyTestCase(unittest.TestCase):
         self.assertNotEqual(res, "ERROR", "No se ha eliminado la lista")
 
     def test_add_to_list(self):
-        lista, usuario = insert_lista_test()
+        lista, usuario = insert_lista_test("prueba@gmail.com")
         cancion = Cancion(nombre='Test_song', duracion=123, path='test_path')
         DB.session.add(cancion)
         DB.session.commit()
@@ -273,7 +378,8 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(res, "Success", "No se ha podido añadir")
 
     def test_delete_from_list(self):
-        cancion, album, lista, aparicion, usuario = insertar_cancion_album_lista("Song1", "Album1")
+        cancion, album, lista, aparicion, usuario = insertar_cancion_album_lista("Song1", "Album1",
+                                                                                 "prueba@gmail.com")
         status, res = curl('http://localhost:5000/delete_from_list?cancion=%d&lista=%d' %
                            (cancion.id,
                             lista.id))
@@ -297,7 +403,7 @@ class MyTestCase(unittest.TestCase):
                         'Artistas': []})
 
     def test_search_list(self):
-        lista, usuario = insert_lista_test()
+        lista, usuario = insert_lista_test("prueba@gmail.com")
 
         res_esperado = [{"ID": lista.id, "Nombre": lista.nombre, "Imagen": lista.foto,
                          "Desc": lista.descripcion}]
@@ -331,7 +437,8 @@ class MyTestCase(unittest.TestCase):
             insertar_cancion_album_artista_lista(
                 "Song1",
                 "Album1",
-                "Artista1")
+                "Artista1",
+                "prueba@gmail.com")
 
         comprobar_json(self, 'http://localhost:5000/search_in_list?nombre=%s&lista=%s'
                        % (artista.nombre, lista.id), get_single_song_esperado(cancion))
@@ -348,7 +455,8 @@ class MyTestCase(unittest.TestCase):
 
     def test_filter_categorias_lista(self):
         categoria = insert_categoria()
-        cancion, album, lista, aparicion, usuario = insertar_cancion_album_lista("Song1", "Album1")
+        cancion, album, lista, aparicion, usuario = insertar_cancion_album_lista("Song1", "Album1",
+                                                                                 "prueba@gmail.com")
 
         categoria.canciones.append(cancion)
         DB.session.commit()

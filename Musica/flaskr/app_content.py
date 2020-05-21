@@ -611,28 +611,28 @@ def listing(tipo):
     """
     resultado = None
 
-    if tipo == "albums":
+    if tipo == "albums":  # TEST DONE
         resultado = listar("album", Album)
 
-    elif tipo == "artists":
+    elif tipo == "artists":  # TEST DONE
         resultado = listar("artista", Artista)
 
-    elif tipo == "podcast":
+    elif tipo == "podcast":  # TEST DONE
         usuario = leer_datos(request, ["email"])
         resultado = listar("podcast", None, usuario)
 
-    elif tipo == "categories":
+    elif tipo == "categories":  # TEST DONE
         resultado = listar("categoria", Categoria)
 
-    elif tipo == "suscriptions":
+    elif tipo == "suscriptions":  # TEST DONE
         usuario = leer_datos(request, ["email"])
         resultado = listar("suscripcion", None, usuario)
 
-    elif tipo == "lists":  # Listas de reproduccion
+    elif tipo == "lists":  # Listas de reproduccion # TEST DONE
         usuario = leer_datos(request, ["email"])
         resultado = listar("lista", None, usuario)
 
-    elif tipo == "friends":
+    elif tipo == "friends":  # TEST DONE
         usuario = leer_datos(request, ["email"])
         resultado = listar("amistades", None, usuario)
 
@@ -640,11 +640,11 @@ def listing(tipo):
         usuario = leer_datos(request, ["email"])
         resultado = listar("peticiones_recibidas", None, usuario)
 
-    elif tipo == "peticiones_enviadas":
+    elif tipo == "peticiones_enviadas":  # ELIMINAR
         usuario = leer_datos(request, ["email"])
         resultado = listar("peticiones_enviadas", None, usuario)
 
-    elif tipo == "listas_compartidas":
+    elif tipo == "listas_compartidas":  # ELIMINAR
         usuario = leer_datos(request, ["email"])
         resultado = listar("listas_compartidas", None, usuario)
 
@@ -656,7 +656,7 @@ def listing(tipo):
         usuario = leer_datos(request, ["email"])
         resultado = listar("podcast_compartidos", None, usuario)
 
-    elif tipo == "canciones_compartidas":
+    elif tipo == "canciones_compartidas":  # ELIMINAR
         usuario = leer_datos(request, ["email"])
         resultado = listar("canciones_compartidas", None, usuario)
 
@@ -1507,10 +1507,12 @@ def get_ultima_cancion():
 
         if usuario.ultima_cancion is None:
             return jsonify({"Cancion": None,
-                            "Segundo": usuario.segundo_ultima_cancion})
+                            "Segundo": None,
+                            "Lista": None})
 
         return jsonify({"Cancion": listar_canciones([usuario.ultima_cancion]),
-                        "Segundo": usuario.segundo_ultima_cancion})
+                        "Segundo": usuario.segundo_ultima_cancion,
+                        "Lista": usuario.id_ultima_lista})
 
     except (IntegrityError, OperationalError) as e:
         print(e)
