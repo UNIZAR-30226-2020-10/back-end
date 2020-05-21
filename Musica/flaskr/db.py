@@ -186,7 +186,7 @@ class Lista(DB.Model):
 
 class Usuario(DB.Model):
     """
-    Entidad que reprenta a un usuario del sistema de canciones y podcast
+    Entidad que representa a un usuario del sistema de canciones y podcast
     """
     email = DB.Column(DB.String(50), primary_key=True)
     nombre = DB.Column(DB.String(20), nullable=False)
@@ -252,6 +252,8 @@ class Usuario(DB.Model):
     id_ultima_cancion = DB.Column(DB.Integer, DB.ForeignKey('cancion.id'))
     ultima_cancion = DB.relationship('Cancion', back_populates="usuarios_ultima_cancion")
     segundo_ultima_cancion = DB.Column(DB.Integer)
+    # Usuario <- Lista 'ultima'
+    id_ultima_lista = DB.Column(DB.Integer)
 
 
 class Solicitud(DB.Model):
