@@ -13,17 +13,12 @@ from psycopg2.errors import UniqueViolation, InvalidDatetimeFormat
 from sqlalchemy.exc import DataError, OperationalError, IntegrityError
 from flaskr.db import APP, fetch_data_by_id, Lista, Cancion, DB, Categoria, Artista, leer_todo, \
     Usuario, Aparicion, Album, SeriePodcast, ListaPodcast, Solicitud, MAIL, ListaCompartida, \
-    CancionCompartida
+    CancionCompartida, PodcastCompartido
 from flask_mail import Message
 import boto3
-from cryptography.fernet import Fernet
 
-key = "l_lK3Kb8411JZKrY5BQy-DuPtBj5-n5zEx4Rm-zhS6c=l_lK3Kb8411JZKrY5BQy-DuPtBj5-n5zEx4Rm-zhS6c="
-
-fer = Fernet(key.encode())
-
-username_frontend = "frontend"
-pass_front = "password"
+username_frontend = "elon"
+pass_front = "karen"
 
 
 # pylint: disable=no-member
@@ -37,9 +32,9 @@ def login_required(f):
     def wrap(*args, **kwargs):
         if request.authorization is None:
             return "Acceso no autorizado"
-
-        if fer.decrypt(request.authorization.username.encode()) == username_frontend.encode() and \
-                fer.decrypt(request.authorization.password.encode()) == pass_front.encode():
+        print(request.authorization)
+        if request.authorization.username == username_frontend and \
+                request.authorization.password == pass_front:
             return f(*args, **kwargs)
         else:
             return "Acceso no autorizado"
@@ -118,6 +113,8 @@ def listar(tipo, tabla, usuario=None):
                 dictionary = listar_canciones_compartidas(usuario.canciones_enviadas)
             elif tipo == "canciones_compartidas_conmigo":
                 dictionary = listar_canciones_compartidas(usuario.canciones_recibidas)
+            elif tipo == "podcast_compartidos":
+                dictionary = listar_podcast_compartidos(usuario.podcasts_recibidos)
             else:
                 dictionary = listar_listas(usuario.listas)
 
@@ -286,6 +283,18 @@ def listar_canciones_compartidas(lista):
     return canciones
 
 
+def listar_podcast_compartidos(lista):
+    dictionary = []
+    for element in lista:
+        res = {"Podcast": element.id_serie_podcast, "ID": element.id,
+               "Emisor": listar_usuarios([element.notificante]),
+               "Receptor": listar_usuarios([element.notificado]),
+               "Notificacion": element.notificacion}
+        dictionary.append(res)
+
+    return dictionary
+
+
 def listar_datos(tipo, tabla, dato):
     """
     Lista los datos de un elemento de tipo <tipo> con id <dato>
@@ -361,7 +370,6 @@ def listar_datos_lista(listas, canciones=None):
 
     # Canciones es una lista de las canciones ordenadas según el gusto del usuario
     if canciones is not None:
-        print(canciones)
         if canciones:
             dictionary["Canciones"] = listar_canciones([ass.cancion for ass in canciones])
         else:
@@ -643,6 +651,10 @@ def listing(tipo):
     elif tipo == "listas_compartidas_conmigo":
         usuario = leer_datos(request, ["email"])
         resultado = listar("listas_compartidas_conmigo", None, usuario)
+
+    elif tipo == "podcast_compartidos":
+        usuario = leer_datos(request, ["email"])
+        resultado = listar("podcast_compartidos", None, usuario)
 
     elif tipo == "canciones_compartidas":
         usuario = leer_datos(request, ["email"])
@@ -1112,8 +1124,6 @@ def registro():
                                     email_usuario=user.email))
         DB.session.commit()
 
-        print("Todo bien")
-
         serializer = URLSafeTimedSerializer(APP.config['SECRET_KEY'])
         token = serializer.dumps(email, salt=APP.config['SECURITY_PASSWORD_SALT'])
 
@@ -1457,17 +1467,25 @@ def eliminar_amigo():
 
 @APP.route('/set_last_song', methods=['POST', 'GET'])
 def set_ultima_cancion():
-    usuario, cancion, segundo = leer_datos(request, ["email",
-                                                     "cancion",
-                                                     "segundo"])
+    usuario, cancion, segundo, lista = leer_datos(request, ["email",
+                                                            "cancion",
+                                                            "segundo",
+                                                            "lista"])
 
     try:
         usuario = get_user(usuario)
         if usuario is None:
             return "No existe usuario"
 
+        if cancion is None:
+            return "No hay cancion"
+
+        if segundo is None:
+            segundo = 0
+
         usuario.id_ultima_cancion = int(cancion)
         usuario.segundo_ultima_cancion = int(segundo)
+        usuario.id_ultima_lista = int(lista)
         DB.session.commit()
 
         return "Success"
@@ -1552,6 +1570,10 @@ def compartir(tipo):
         tabla = CancionCompartida
         tipo_id = CancionCompartida.id_cancion
         elemento, emisor, receptor = leer_datos(request, ["cancion", "emisor", "receptor"])
+    elif tipo == "podcast":
+        tabla = PodcastCompartido
+        tipo_id = PodcastCompartido.id_serie_podcast
+        elemento, emisor, receptor = leer_datos(request, ["podcast", "emisor", "receptor"])
     else:
         return "Url incorrecta"
     try:
@@ -1572,6 +1594,11 @@ def compartir(tipo):
                                email_usuario_notificante=emisor)
         elif tipo == "song":
             compartida = tabla(id_cancion=elemento,
+                               email_usuario_notificado=receptor,
+                               email_usuario_notificante=emisor)
+
+        elif tipo == "podcast":
+            compartida = tabla(id_serie_podcast=elemento,
                                email_usuario_notificado=receptor,
                                email_usuario_notificante=emisor)
 
@@ -1686,7 +1713,7 @@ def agregar_lista_compartida():
         return "Error"
 
 
-@APP.route('/sign_s3/')
+@APP.route('/sign_s3')
 def sign_s3():
     s3_bucket = os.environ.get('S3_BUCKET')
 
