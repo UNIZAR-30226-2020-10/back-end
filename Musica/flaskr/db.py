@@ -62,9 +62,9 @@ publicacion = DB.Table('publicacion',
 
 # Usuario <-> Usuario 'conoce'
 amistad = DB.Table('amistad',
-                   DB.Column('usuario1', DB.String(25),
+                   DB.Column('usuario1', DB.String(50),
                              DB.ForeignKey('usuario.email', ondelete="CASCADE")),
-                   DB.Column('usuario2', DB.String(25),
+                   DB.Column('usuario2', DB.String(50),
                              DB.ForeignKey('usuario.email', ondelete="CASCADE"))
                    )
 
@@ -72,7 +72,7 @@ amistad = DB.Table('amistad',
 cap_escuchado = DB.Table('cap_escuchado',
                          DB.Column('capitulo', DB.String(50),
                                    DB.ForeignKey('capitulo_podcast.id', ondelete="CASCADE")),
-                         DB.Column('usuario', DB.String(25),
+                         DB.Column('usuario', DB.String(50),
                                    DB.ForeignKey('usuario.email', ondelete="CASCADE"))
                          )
 
@@ -86,7 +86,7 @@ aparicion_podcast = DB.Table('aparicion_podcast',
 
 # Usuario <-> Artista 'suscrito'
 suscripcion = DB.Table('suscripcion',
-                       DB.Column('usuario', DB.String(25),
+                       DB.Column('usuario', DB.String(50),
                                  DB.ForeignKey('usuario.email', ondelete="CASCADE")),
                        DB.Column('artista', DB.String(20),
                                  DB.ForeignKey('artista.nombre', ondelete="CASCADE"))
@@ -180,7 +180,7 @@ class Lista(DB.Model):
 
     # MANY TO ONE relationships
     # Lista <- Usuario 'tiene'
-    email_usuario = DB.Column(DB.String(25), DB.ForeignKey('usuario.email', ondelete="CASCADE"))
+    email_usuario = DB.Column(DB.String(50), DB.ForeignKey('usuario.email', ondelete="CASCADE"))
     usuario = DB.relationship('Usuario', back_populates="listas")
 
 
@@ -226,6 +226,10 @@ class Usuario(DB.Model):
     canciones_enviadas = DB.relationship('CancionCompartida', back_populates="notificante",
                                          foreign_keys="CancionCompartida.email_usuario_notificante",
                                          cascade='save-update, delete')
+    # Usuario -> PodcastCompartido 'envia'
+    podcasts_enviados = DB.relationship('PodcastCompartido', back_populates="notificante",
+                                        foreign_keys="PodcastCompartido.email_usuario_notificante",
+                                        cascade='save-update, delete')
     # Usuario -> Solicitud 'recibe'
     solicitudes_recibidas = DB.relationship('Solicitud', back_populates="notificado",
                                             foreign_keys="Solicitud.email_usuario_notificado",
@@ -234,10 +238,14 @@ class Usuario(DB.Model):
     listas_recibidas = DB.relationship('ListaCompartida', back_populates="notificado",
                                        foreign_keys="ListaCompartida.email_usuario_notificado",
                                        cascade='save-update, delete')
-    # Relacion 'recibe'
+    # Usuario -> CancionCompartida 'recibe'
     canciones_recibidas = DB.relationship('CancionCompartida', back_populates="notificado",
                                           foreign_keys="CancionCompartida.email_usuario_notificado",
                                           cascade='save-update, delete')
+    # Usuario -> PodcastCompartido 'recibe'
+    podcasts_recibidos = DB.relationship('PodcastCompartido', back_populates="notificado",
+                                         foreign_keys="PodcastCompartido.email_usuario_notificado",
+                                         cascade='save-update, delete')
 
     # MANY TO ONE relationships
     # Usuario <- Cancion 'ultima'
@@ -255,14 +263,14 @@ class Solicitud(DB.Model):
 
     # MANY TO ONE relationships
     # Solicitud <- Usuario 'envia'
-    email_usuario_notificante = DB.Column(DB.String(25),
+    email_usuario_notificante = DB.Column(DB.String(50),
                                           DB.ForeignKey('usuario.email', ondelete="CASCADE"),
                                           nullable=False)
     notificante = DB.relationship('Usuario', back_populates="solicitudes_enviadas",
                                   foreign_keys=email_usuario_notificante)
 
     # Solicitud <- Usuario 'recibe'
-    email_usuario_notificado = DB.Column(DB.String(25),
+    email_usuario_notificado = DB.Column(DB.String(50),
                                          DB.ForeignKey('usuario.email', ondelete="CASCADE"),
                                          nullable=False)
     notificado = DB.relationship('Usuario', back_populates="solicitudes_recibidas",
@@ -282,14 +290,14 @@ class ListaCompartida(DB.Model):
     lista = DB.relationship('Lista', back_populates="comparticiones")
 
     # ListaCompartida <- Usuario 'envia'
-    email_usuario_notificante = DB.Column(DB.String(25),
+    email_usuario_notificante = DB.Column(DB.String(50),
                                           DB.ForeignKey('usuario.email', ondelete="CASCADE"),
                                           nullable=False)
     notificante = DB.relationship('Usuario', back_populates="listas_enviadas",
                                   foreign_keys=email_usuario_notificante)
 
     # ListaCompartida <- Usuario 'recibe'
-    email_usuario_notificado = DB.Column(DB.String(25),
+    email_usuario_notificado = DB.Column(DB.String(50),
                                          DB.ForeignKey('usuario.email', ondelete="CASCADE"),
                                          nullable=False)
     notificado = DB.relationship('Usuario', back_populates="listas_recibidas",
@@ -318,9 +326,36 @@ class CancionCompartida(DB.Model):
     notificado = DB.relationship('Usuario', back_populates="canciones_recibidas",
                                  foreign_keys=email_usuario_notificado)
 
-    # CancionCompartida <- Cancion
+    # CancionCompartida <- Cancion 'compartida'
     id_cancion = DB.Column(DB.Integer, DB.ForeignKey('cancion.id'), nullable=False)
     cancion = DB.relationship('Cancion', back_populates="comparticiones")
+
+
+class PodcastCompartido(DB.Model):
+    """
+    Tipo de entidad Notificación que representa una compartición de SeriePodcast
+    """
+    id = DB.Column(DB.Integer, primary_key=True)
+    notificacion = DB.Column(DB.Boolean, default=True)
+
+    # MANY TO ONE relationships
+    # CancionCompartida <- Usuario 'envia'
+    email_usuario_notificante = DB.Column(DB.String(50),
+                                          DB.ForeignKey('usuario.email', ondelete="CASCADE"),
+                                          nullable=False)
+    notificante = DB.relationship('Usuario', back_populates="podcasts_enviados",
+                                  foreign_keys=email_usuario_notificante)
+
+    # CancionCompartida <- Usuario 'recibe'
+    email_usuario_notificado = DB.Column(DB.String(50),
+                                         DB.ForeignKey('usuario.email', ondelete="CASCADE"),
+                                         nullable=False)
+    notificado = DB.relationship('Usuario', back_populates="podcasts_recibidos",
+                                 foreign_keys=email_usuario_notificado)
+
+    # PodcastCompartido <- Podcast 'compartido'
+    id_serie_podcast = DB.Column(DB.String(50), DB.ForeignKey('serie_podcast.id'), nullable=False)
+    serie_podcast = DB.relationship('SeriePodcast', back_populates="comparticiones")
 
 
 class Cancion(DB.Model):
@@ -368,6 +403,8 @@ class SeriePodcast(DB.Model):
     # ONE TO MANY relationships
     # SeriePodcast -> CapituloPodcast 'compuesta'
     capitulos = DB.relationship('CapituloPodcast', back_populates="serie")
+    # SeriePodcast -> PodcastCompartido 'compartido'
+    comparticiones = DB.relationship('PodcastCompartido', back_populates="serie_podcast")
 
 
 class CapituloPodcast(DB.Model):
@@ -401,7 +438,7 @@ class ListaPodcast(DB.Model):
 
     # MANY TO ONE relationships
     # ListaPodcast <- Usuario 'tiene'
-    email_usuario = DB.Column(DB.String(25), DB.ForeignKey('usuario.email', ondelete="CASCADE"),
+    email_usuario = DB.Column(DB.String(50), DB.ForeignKey('usuario.email', ondelete="CASCADE"),
                               nullable=False)
     usuario = DB.relationship('Usuario', back_populates="listas_podcast")
 

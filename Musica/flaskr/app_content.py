@@ -13,7 +13,7 @@ from psycopg2.errors import UniqueViolation, InvalidDatetimeFormat
 from sqlalchemy.exc import DataError, OperationalError, IntegrityError
 from flaskr.db import APP, fetch_data_by_id, Lista, Cancion, DB, Categoria, Artista, leer_todo, \
     Usuario, Aparicion, Album, SeriePodcast, ListaPodcast, Solicitud, MAIL, ListaCompartida, \
-    CancionCompartida
+    CancionCompartida, PodcastCompartido
 from flask_mail import Message
 import boto3
 
@@ -114,7 +114,7 @@ def listar(tipo, tabla, usuario=None):
             elif tipo == "canciones_compartidas_conmigo":
                 dictionary = listar_canciones_compartidas(usuario.canciones_recibidas)
             elif tipo == "podcast_compartidos":
-                dictionary = listar_podcast_compartidos(usuario.podcast_recibidos)
+                dictionary = listar_podcast_compartidos(usuario.podcasts_recibidos)
             else:
                 dictionary = listar_listas(usuario.listas)
 
@@ -286,7 +286,7 @@ def listar_canciones_compartidas(lista):
 def listar_podcast_compartidos(lista):
     dictionary = []
     for element in lista:
-        res = {"Podcast": element.id_podcast, "ID": element.id,
+        res = {"Podcast": element.id_serie_podcast, "ID": element.id,
                "Emisor": listar_usuarios([element.notificante]),
                "Receptor": listar_usuarios([element.notificado]),
                "Notificacion": element.notificacion}
@@ -1572,7 +1572,8 @@ def compartir(tipo):
         elemento, emisor, receptor = leer_datos(request, ["cancion", "emisor", "receptor"])
     elif tipo == "podcast":
         tabla = PodcastCompartido
-        tipo_id = PodcastCompartido.id_podcast
+        tipo_id = PodcastCompartido.id_serie_podcast
+        elemento, emisor, receptor = leer_datos(request, ["podcast", "emisor", "receptor"])
     else:
         return "Url incorrecta"
     try:
@@ -1597,7 +1598,7 @@ def compartir(tipo):
                                email_usuario_notificante=emisor)
 
         elif tipo == "podcast":
-            compartida = tabla(id_podcast=elemento,
+            compartida = tabla(id_serie_podcast=elemento,
                                email_usuario_notificado=receptor,
                                email_usuario_notificante=emisor)
 
