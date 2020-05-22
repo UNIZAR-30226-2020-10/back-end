@@ -17,8 +17,8 @@ from flaskr.db import APP, fetch_data_by_id, Lista, Cancion, DB, Categoria, Arti
 from flask_mail import Message
 import boto3
 
-username_frontend = "elon"
-pass_front = "karen"
+username_frontend = "b30KZfUi7+NZEel/HBBxpw=="
+pass_front = "3rDGzzz44C3owoAwVE6VgQ=="
 
 
 # pylint: disable=no-member
@@ -1485,7 +1485,12 @@ def set_ultima_cancion():
 
         usuario.id_ultima_cancion = int(cancion)
         usuario.segundo_ultima_cancion = int(segundo)
-        usuario.id_ultima_lista = int(lista)
+
+        if lista is None:
+            usuario.id_ultima_lista = None
+        else:
+            usuario.id_ultima_lista = int(lista)
+
         DB.session.commit()
 
         return "Success"
