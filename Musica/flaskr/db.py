@@ -103,7 +103,7 @@ class Aparicion(DB.Model):
     id_cancion = DB.Column(DB.Integer, DB.ForeignKey('cancion.id'), primary_key=True)
     orden = DB.Column(DB.Integer, nullable=False)
 
-    # Lista - Aparicion - Cancion : Associaton object
+    # Lista - Aparicion - Cancion : Association object
     cancion = DB.relationship('Cancion', back_populates="apariciones")
     lista = DB.relationship('Lista', back_populates="apariciones")
 
@@ -193,7 +193,6 @@ class Usuario(DB.Model):
     password = DB.Column(DB.String, nullable=False)
     fecha_nacimiento = DB.Column(DB.DateTime)
     pais = DB.Column(DB.String(40))
-    foto = DB.Column(DB.String(150), default='https://psoftware.s3.amazonaws.com/user_default.jpg')
     token = DB.Column(DB.String(200), unique=True)
     confirmado = DB.Column(DB.Boolean(), default=False)
 
@@ -254,6 +253,9 @@ class Usuario(DB.Model):
     segundo_ultima_cancion = DB.Column(DB.Integer)
     # Usuario <- Lista 'ultima'
     id_ultima_lista = DB.Column(DB.Integer)
+    # Usuario <- Foto 'foto_perfil'
+    id_foto = DB.Column(DB.Integer, DB.ForeignKey('foto.id'))
+    foto = DB.relationship('Foto', back_populates="usuarios")
 
 
 class Solicitud(DB.Model):
@@ -443,6 +445,19 @@ class ListaPodcast(DB.Model):
     email_usuario = DB.Column(DB.String(50), DB.ForeignKey('usuario.email', ondelete="CASCADE"),
                               nullable=False)
     usuario = DB.relationship('Usuario', back_populates="listas_podcast")
+
+
+class Foto(DB.Model):
+    """
+    Entidad que representa una foto de perfil
+    """
+    id = DB.Column(DB.Integer, primary_key=True)
+    nombre = DB.Column(DB.String(40))
+    url = DB.Column(DB.String(150), unique=True)
+
+    # ONE TO MANY relationships
+    # Foto -> Usuario 'foto_perfil'
+    usuarios = DB.relationship('Usuario', back_populates="foto")
 
 
 DB.create_all()

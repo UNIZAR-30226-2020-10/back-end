@@ -37,27 +37,42 @@ albumes = [
 ]
 
 artistas = [
-    Artista(nombre='Alan Walker', fecha_nacimiento=datetime.datetime(1990, 1, 2),foto='https://psoftware.s3.amazonaws.com/alan_walker.jpg'),
-    Artista(nombre='Cartoon', fecha_nacimiento=datetime.datetime(1991, 5, 1), foto='https://psoftware.s3.amazonaws.com/cartoon.png'),
-    Artista(nombre='Deaf kev', fecha_nacimiento=datetime.datetime(1990, 1, 2), foto='https://psoftware.s3.amazonaws.com/deaf_kev.jpg'),
-    Artista(nombre='Different heaven', fecha_nacimiento=datetime.datetime(1990, 1, 2), foto='https://psoftware.s3.amazonaws.com/different_heaven.jpeg'),
-    Artista(nombre='Disfigure', fecha_nacimiento=datetime.datetime(1990, 1, 2), foto='https://psoftware.s3.amazonaws.com/disfigure.jpg'),
-    Artista(nombre='Electro light', fecha_nacimiento=datetime.datetime(1990, 1, 2), foto='https://psoftware.s3.amazonaws.com/electro_light.jpeg'),
-    Artista(nombre='Electonomia', fecha_nacimiento=datetime.datetime(1990, 1, 2), foto='https://psoftware.s3.amazonaws.com/electronomia.jpeg'),
-    Artista(nombre='Janji', fecha_nacimiento=datetime.datetime(1990, 1, 2), foto='https://psoftware.s3.amazonaws.com/janji.jpg'),
-    Artista(nombre='Spekterm', fecha_nacimiento=datetime.datetime(1990, 1, 2), foto='https://psoftware.s3.amazonaws.com/spektrem.jpg'),
-    Artista(nombre='Tobu', fecha_nacimiento=datetime.datetime(1990, 1, 2), foto='https://psoftware.s3.amazonaws.com/tobu.jpg'),
-    Artista(nombre='Daniel levi', fecha_nacimiento=datetime.datetime(1990, 1, 2), foto='https://psoftware.s3.amazonaws.com/daniel_levi.jpg'),
-    Artista(nombre='Coleman trapp', fecha_nacimiento=datetime.datetime(1990, 1, 2), foto='https://psoftware.s3.amazonaws.com/coleman_trapp.jpg'),
-    Artista(nombre='Ehde', fecha_nacimiento=datetime.datetime(1990, 1, 2), foto='https://psoftware.s3.amazonaws.com/ehde.png'),
-    Artista(nombre='Johnning', fecha_nacimiento=datetime.datetime(1990, 1, 2), foto='https://psoftware.s3.amazonaws.com/johnning.jpeg')
+    Artista(nombre='Alan Walker', fecha_nacimiento=datetime.datetime(1990, 1, 2),
+            foto='https://psoftware.s3.amazonaws.com/alan_walker.jpg'),
+    Artista(nombre='Cartoon', fecha_nacimiento=datetime.datetime(1991, 5, 1),
+            foto='https://psoftware.s3.amazonaws.com/cartoon.png'),
+    Artista(nombre='Deaf kev', fecha_nacimiento=datetime.datetime(1990, 1, 2),
+            foto='https://psoftware.s3.amazonaws.com/deaf_kev.jpg'),
+    Artista(nombre='Different heaven', fecha_nacimiento=datetime.datetime(1990, 1, 2),
+            foto='https://psoftware.s3.amazonaws.com/different_heaven.jpeg'),
+    Artista(nombre='Disfigure', fecha_nacimiento=datetime.datetime(1990, 1, 2),
+            foto='https://psoftware.s3.amazonaws.com/disfigure.jpg'),
+    Artista(nombre='Electro light', fecha_nacimiento=datetime.datetime(1990, 1, 2),
+            foto='https://psoftware.s3.amazonaws.com/electro_light.jpeg'),
+    Artista(nombre='Electonomia', fecha_nacimiento=datetime.datetime(1990, 1, 2),
+            foto='https://psoftware.s3.amazonaws.com/electronomia.jpeg'),
+    Artista(nombre='Janji', fecha_nacimiento=datetime.datetime(1990, 1, 2),
+            foto='https://psoftware.s3.amazonaws.com/janji.jpg'),
+    Artista(nombre='Spekterm', fecha_nacimiento=datetime.datetime(1990, 1, 2),
+            foto='https://psoftware.s3.amazonaws.com/spektrem.jpg'),
+    Artista(nombre='Tobu', fecha_nacimiento=datetime.datetime(1990, 1, 2),
+            foto='https://psoftware.s3.amazonaws.com/tobu.jpg'),
+    Artista(nombre='Daniel levi', fecha_nacimiento=datetime.datetime(1990, 1, 2),
+            foto='https://psoftware.s3.amazonaws.com/daniel_levi.jpg'),
+    Artista(nombre='Coleman trapp', fecha_nacimiento=datetime.datetime(1990, 1, 2),
+            foto='https://psoftware.s3.amazonaws.com/coleman_trapp.jpg'),
+    Artista(nombre='Ehde', fecha_nacimiento=datetime.datetime(1990, 1, 2),
+            foto='https://psoftware.s3.amazonaws.com/ehde.png'),
+    Artista(nombre='Johnning', fecha_nacimiento=datetime.datetime(1990, 1, 2),
+            foto='https://psoftware.s3.amazonaws.com/johnning.jpeg')
 ]
 
 categorias = [
     Categoria(nombre='Rock', descripcion='Categoria Rock', foto='https://psoftware.s3.amazonaws.com/rock.png'),
     Categoria(nombre='Pop', descripcion='Categoria Pop', foto='https://psoftware.s3.amazonaws.com/pop.png'),
     Categoria(nombre='Indie', descripcion='Categoria EDM', foto='https://psoftware.s3.amazonaws.com/indie.png'),
-    Categoria(nombre='Electronic', descripcion='Categoria Electronic', foto='https://psoftware.s3.amazonaws.com/electronic.png'),
+    Categoria(nombre='Electronic', descripcion='Categoria Electronic',
+              foto='https://psoftware.s3.amazonaws.com/electronic.png'),
     Categoria(nombre='Hip-hop', descripcion='Categoria Clasica', foto='https://psoftware.s3.amazonaws.com/hip-hop.png'),
 ]
 
@@ -72,11 +87,11 @@ listas = [
 usuarios = [
     Usuario(email='elon@gmail.com', nombre='Elon Musk', password='HgdSUOL8Dst9gKUWtaoXqg==',
             fecha_nacimiento=datetime.datetime(2000, 1, 1), pais='United States of America',
-            foto='https://psoftware.s3.amazonaws.com/usuario_elon-musk.jpeg', confirmado=True),
+            confirmado=True),
     Usuario(email='karen@gmail.com', nombre='Karen Sparck Jones',
             password='XDNYNrPgHEt5+WoZeB7uQw==',
             fecha_nacimiento=datetime.datetime(2001, 1, 1), pais='United Kingdom',
-            foto='https://psoftware.s3.amazonaws.com/usuario_karen.png', confirmado=True)
+            confirmado=True)
 ]
 
 canciones = [
@@ -139,6 +154,19 @@ canciones_compartidas = [
                       id_cancion=2)
 ]
 
+fotos = [
+    Foto(nombre='Elon', url='https://psoftware.s3.amazonaws.com/fotos_perfil/elon.jpeg'),
+    Foto(nombre='Karen', url='https://psoftware.s3.amazonaws.com/fotos_perfil/karen.png'),
+    Foto(nombre='Default', url='https://psoftware.s3.amazonaws.com/fotos_perfil/default.jpg'),
+    Foto(nombre='Alberto', url='https://psoftware.s3.amazonaws.com/fotos_perfil/alberto.jpeg'),
+    Foto(nombre='Alejandro', url='https://psoftware.s3.amazonaws.com/fotos_perfil/alejandro.jpeg'),
+    Foto(nombre='Álvaro', url='https://psoftware.s3.amazonaws.com/fotos_perfil/alvaro.jpeg'),
+    Foto(nombre='Germán', url='https://psoftware.s3.amazonaws.com/fotos_perfil/german.jpeg'),
+    Foto(nombre='Luis', url='https://psoftware.s3.amazonaws.com/fotos_perfil/luis.jpeg'),
+    Foto(nombre='Óscar', url='https://psoftware.s3.amazonaws.com/fotos_perfil/oscar.jpeg'),
+    Foto(nombre='Profesor', url='https://psoftware.s3.amazonaws.com/fotos_perfil/profesor.jpg')
+]
+
 DB.session.add_all(categorias)
 DB.session.add_all(artistas)
 DB.session.add_all(albumes)
@@ -151,6 +179,7 @@ DB.session.add_all(canciones)
 DB.session.add_all(series_podcast)
 DB.session.add_all(capitulos_podcast)
 DB.session.add_all(listas_podcast)
+DB.session.add_all(fotos)
 
 # Añadir relaciones
 
@@ -271,5 +300,10 @@ usuarios[0].listas_podcast.append(listas_podcast[0])
 for i in range(len(artistas) // 2):
     usuarios[0].artistas.append(artistas[i])
     usuarios[1].artistas.append(artistas[i])
+
+# Relacion 'foto_perfil'
+# Elon
+usuarios[0].foto = fotos[0]
+usuarios[1].foto = fotos[1]
 
 DB.session.commit()
