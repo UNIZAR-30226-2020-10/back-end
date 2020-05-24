@@ -13,12 +13,12 @@ from psycopg2.errors import UniqueViolation, InvalidDatetimeFormat
 from sqlalchemy.exc import DataError, OperationalError, IntegrityError
 from flaskr.db import APP, fetch_data_by_id, Lista, Cancion, DB, Categoria, Artista, leer_todo, \
     Usuario, Aparicion, Album, SeriePodcast, ListaPodcast, Solicitud, MAIL, ListaCompartida, \
-    CancionCompartida, PodcastCompartido
+    CancionCompartida, PodcastCompartido, Foto
 from flask_mail import Message
 import boto3
 
-username_frontend = "elon"
-pass_front = "karen"
+username_frontend = "b30KZfUi7+NZEel/HBBxpw=="
+pass_front = "3rDGzzz44C3owoAwVE6VgQ=="
 
 
 # pylint: disable=no-member
@@ -131,6 +131,8 @@ def listar(tipo, tabla, usuario=None):
             dictionary = listar_albums(dato)
         elif tipo == "categoria":
             dictionary = listar_categorias(dato)
+        elif tipo == "foto":
+            dictionary = listar_foto_perfil(dato)
         else:
             dictionary = listar_canciones(dato)
 
@@ -240,7 +242,8 @@ def listar_usuarios(lista):
     usuarios = []
     for usuario in lista:
         if usuario.confirmado:
-            dictionary = {"Nombre": usuario.nombre, "Imagen": usuario.foto, "Email": usuario.email,
+            dictionary = {"Nombre": usuario.nombre, "Imagen": usuario.foto.url,
+                          "Email": usuario.email,
                           "Fecha": usuario.fecha_nacimiento, "Pais": usuario.pais, "Token":
                               usuario.token}
             usuarios.append(dictionary)
@@ -290,6 +293,15 @@ def listar_podcast_compartidos(lista):
                "Emisor": listar_usuarios([element.notificante]),
                "Receptor": listar_usuarios([element.notificado]),
                "Notificacion": element.notificacion}
+        dictionary.append(res)
+
+    return dictionary
+
+
+def listar_foto_perfil(lista):
+    dictionary = []
+    for element in lista:
+        res = {"Url": element.url, "ID": element.id, "Nombre": element.nombre}
         dictionary.append(res)
 
     return dictionary
@@ -443,7 +455,7 @@ def listar_datos_usuario(usuario):
              "Password": usuario.password,
              "fecha": usuario.fecha_nacimiento.strftime("%A, %d %b %Y"),
              "Pais": usuario.pais,
-             "Foto": usuario.foto}
+             "Foto": usuario.foto.url}
 
     return dicty
 
@@ -611,58 +623,61 @@ def listing(tipo):
     """
     resultado = None
 
-    if tipo == "albums":
+    if tipo == "albums":  # TEST DONE
         resultado = listar("album", Album)
 
-    elif tipo == "artists":
+    elif tipo == "artists":  # TEST DONE
         resultado = listar("artista", Artista)
 
-    elif tipo == "podcast":
+    elif tipo == "podcast":  # TEST DONE
         usuario = leer_datos(request, ["email"])
         resultado = listar("podcast", None, usuario)
 
-    elif tipo == "categories":
+    elif tipo == "categories":  # TEST DONE
         resultado = listar("categoria", Categoria)
 
-    elif tipo == "suscriptions":
+    elif tipo == "suscriptions":  # TEST DONE
         usuario = leer_datos(request, ["email"])
         resultado = listar("suscripcion", None, usuario)
 
-    elif tipo == "lists":  # Listas de reproduccion
+    elif tipo == "lists":  # Listas de reproduccion # TEST DONE
         usuario = leer_datos(request, ["email"])
         resultado = listar("lista", None, usuario)
 
-    elif tipo == "friends":
+    elif tipo == "friends":  # TEST DONE
         usuario = leer_datos(request, ["email"])
         resultado = listar("amistades", None, usuario)
 
-    elif tipo == "peticiones_recibidas":
+    elif tipo == "peticiones_recibidas":  # TEST DONE
         usuario = leer_datos(request, ["email"])
         resultado = listar("peticiones_recibidas", None, usuario)
 
-    elif tipo == "peticiones_enviadas":
+    elif tipo == "peticiones_enviadas":  # ELIMINAR
         usuario = leer_datos(request, ["email"])
         resultado = listar("peticiones_enviadas", None, usuario)
 
-    elif tipo == "listas_compartidas":
+    elif tipo == "listas_compartidas":  # ELIMINAR
         usuario = leer_datos(request, ["email"])
         resultado = listar("listas_compartidas", None, usuario)
 
-    elif tipo == "listas_compartidas_conmigo":
+    elif tipo == "listas_compartidas_conmigo":  # TEST DONE
         usuario = leer_datos(request, ["email"])
         resultado = listar("listas_compartidas_conmigo", None, usuario)
 
-    elif tipo == "podcast_compartidos":
+    elif tipo == "podcast_compartidos":  # TEST DONE
         usuario = leer_datos(request, ["email"])
         resultado = listar("podcast_compartidos", None, usuario)
 
-    elif tipo == "canciones_compartidas":
+    elif tipo == "canciones_compartidas":  # ELIMINAR
         usuario = leer_datos(request, ["email"])
         resultado = listar("canciones_compartidas", None, usuario)
 
-    elif tipo == "canciones_compartidas_conmigo":
+    elif tipo == "canciones_compartidas_conmigo":  # TEST DONE
         usuario = leer_datos(request, ["email"])
         resultado = listar("canciones_compartidas_conmigo", None, usuario)
+
+    elif tipo == "image":
+        resultado = listar("foto", Foto)
 
     if resultado is None:
         return "Url incorrecta"
@@ -1248,6 +1263,7 @@ def modificar_perfil():
         - fecha: formato MM(/ | -)DD(/ | -)AAAA NO OBLIGATORIO
         - nombre: NO OBLIGATORIO
         - pais: NO OBLIGATORIO
+        - foto: id de la foto NO OBLIGATORIO
     :return:
     """
     etiquetas = []
@@ -1282,6 +1298,9 @@ def modificar_perfil():
 
         if "pais" in etiquetas:
             usuario.pais = datos["pais"]
+
+        if "imagen" in etiquetas:
+            usuario.id_foto = int(datos["imagen"])
 
         DB.session.commit()
 
@@ -1485,7 +1504,12 @@ def set_ultima_cancion():
 
         usuario.id_ultima_cancion = int(cancion)
         usuario.segundo_ultima_cancion = int(segundo)
-        usuario.id_ultima_lista = int(lista)
+
+        if lista is None:
+            usuario.id_ultima_lista = None
+        else:
+            usuario.id_ultima_lista = int(lista)
+
         DB.session.commit()
 
         return "Success"
@@ -1507,10 +1531,17 @@ def get_ultima_cancion():
 
         if usuario.ultima_cancion is None:
             return jsonify({"Cancion": None,
-                            "Segundo": usuario.segundo_ultima_cancion})
+                            "Segundo": None,
+                            "Lista": None})
+
+        lista = fetch_data_by_id(Lista, usuario.id_ultima_lista)
+        if lista == "error":
+            usuario.id_ultima_lista = None
+            DB.session.commit()
 
         return jsonify({"Cancion": listar_canciones([usuario.ultima_cancion]),
-                        "Segundo": usuario.segundo_ultima_cancion})
+                        "Segundo": usuario.segundo_ultima_cancion,
+                        "Lista": usuario.id_ultima_lista})
 
     except (IntegrityError, OperationalError) as e:
         print(e)
@@ -1598,6 +1629,12 @@ def compartir(tipo):
                                email_usuario_notificante=emisor)
 
         elif tipo == "podcast":
+
+            podcast = DB.session.query(SeriePodcast).filter_by(id=elemento).first()
+            if podcast is None:
+                podcast = SeriePodcast(id=elemento, nombre="Podcast %s" % elemento)
+                DB.session.add(podcast)
+
             compartida = tabla(id_serie_podcast=elemento,
                                email_usuario_notificado=receptor,
                                email_usuario_notificante=emisor)
@@ -1624,6 +1661,8 @@ def quitar_notificacion(tipo):
         tabla = ListaCompartida
     elif tipo == "song":
         tabla = CancionCompartida
+    elif tipo == "podcast":
+        tabla = PodcastCompartido
     else:
         return "Url incorrecta"
     elemento = leer_datos(request, ["elemento"])
@@ -1656,6 +1695,9 @@ def dejar_compartir_lista(tipo):
     elif tipo == "song":
         tabla = CancionCompartida
         elemento = leer_datos(request, ["cancion"])
+    elif tipo == "podcast":
+        tabla = PodcastCompartido
+        elemento = leer_datos(request, ["podcast"])
     else:
         return "Url incorrecta"
     try:
@@ -1696,7 +1738,13 @@ def agregar_lista_compartida():
         if lista == "error":
             return "No existe lista"
 
-        new_list = Lista(nombre=lista.nombre, descripcion=lista.descripcion, foto=lista.foto)
+        if lista.nombre == "Favoritos":
+            nombre = "Favoritos de " + lista.usuario.nombre
+        else:
+            nombre = lista.nombre
+
+        new_list = Lista(nombre=nombre, descripcion=lista.descripcion,
+                         foto='https://psoftware.s3.amazonaws.com/LogoAppFondoEscalaGrises.png')
 
         for aparicion in lista.apariciones:
             new_list.apariciones.append(Aparicion(id_cancion=aparicion.id_cancion,
