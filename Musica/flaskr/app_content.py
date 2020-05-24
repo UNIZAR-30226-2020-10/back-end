@@ -1123,7 +1123,7 @@ def get_user(email):
 def send_mail(email, token):
     msg = Message(
         "Confirmation Email",
-        body="TuneIt\nPara confirmar tu usuario " +
+        body='\033[1mTUNEIT\033[1m\n\nPara confirmar tu usuario ' +
              "haz click en el siguiente enlace\nhttps://psoftware.herokuapp.com/confirm_email/" +
              token,
         recipients=[email],
@@ -1185,7 +1185,6 @@ def registro():
 
 
 @APP.route('/confirm_email/<token>', methods=['POST', 'GET'])
-@login_required
 def confirmar(token):
     expiration = 3600
     serializer = URLSafeTimedSerializer(APP.config['SECRET_KEY'])
