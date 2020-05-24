@@ -1662,7 +1662,7 @@ def quitar_notificacion(tipo):
     elif tipo == "song":
         tabla = CancionCompartida
     elif tipo == "podcast":
-        tabla = CancionCompartida
+        tabla = PodcastCompartido
     else:
         return "Url incorrecta"
     elemento = leer_datos(request, ["elemento"])
