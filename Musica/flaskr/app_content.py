@@ -604,6 +604,7 @@ def search_lista(lista, usuario):
 # -------------------------------------------------------------------------------------------------
 
 @APP.route('/list', methods=['POST', 'GET'])  # Test DONE
+@login_required
 def list_songs():
     """
     Lista en formato json las canciones presentes en la base de datos y su información básica
@@ -613,6 +614,7 @@ def list_songs():
 
 
 @APP.route('/list_<tipo>', methods=['POST', 'GET'])  # Test DONE
+@login_required
 def listing(tipo):
     """
     Lista en formato json la informacion basica del tipo especificado
@@ -686,6 +688,7 @@ def listing(tipo):
 
 
 @APP.route('/list_<tipo>_data', methods=['POST', 'GET'])  # Test DONE
+@login_required
 def list_data(tipo):
     """
     Lista en formato json la información de una lista de reproducción incluyendo las canciones
@@ -716,6 +719,7 @@ def list_data(tipo):
 
 
 @APP.route('/create_list', methods=['POST', 'GET'])  # Test DONE
+@login_required
 def crear_lista():
     """
     Crea una lista de reproducción con la información proporcionada en la petición
@@ -741,6 +745,7 @@ def crear_lista():
 
 
 @APP.route('/delete_list', methods=['POST', 'GET'])  # Test DONE
+@login_required
 def delete_lista():
     """
     Borra la lista de reproducción especificada
@@ -763,6 +768,7 @@ def delete_lista():
 
 
 @APP.route('/add_to_list', methods=['POST', 'GET'])  # Test DONE
+@login_required
 def add_to_list():
     """
     Añade la canción especificada a la lista de reproducción especificada
@@ -794,6 +800,7 @@ def add_to_list():
 
 
 @APP.route('/delete_from_list', methods=['POST', 'GET'])  # Test DONE
+@login_required
 def delete_from_list():
     """
     Borra la canción especificada de la lista de reproducción especificada
@@ -824,6 +831,7 @@ def delete_from_list():
 
 
 @APP.route('/reorder', methods=['POST', 'GET'])
+@login_required
 def reorder_list():
     """
     Cambia de posición una canción dentro de una lista de reproducción
@@ -862,6 +870,7 @@ def reorder_list():
 
 
 @APP.route('/podcast_fav', methods=['POST', 'GET'])
+@login_required
 def podcast_fav():
     """
     Añade un podcast a la lista de podcast favoritos de un usuario
@@ -897,6 +906,7 @@ def podcast_fav():
 
 
 @APP.route('/delete_podcast_fav', methods=['POST', 'GET'])
+@login_required
 def delete_podcast_fav():
     """
     Elimina un podcast de la lista de favoritos de un usuario
@@ -926,6 +936,7 @@ def delete_podcast_fav():
 
 
 @APP.route('/podcast_is_fav', methods=['POST', 'GET'])
+@login_required
 def podcast_is_fav():
     """
     Devuelve "true" si el podcast esta en la lista de favoritos del usuario especificado y false
@@ -949,6 +960,7 @@ def podcast_is_fav():
 
 
 @APP.route('/is_fav', methods=['POST', 'GET'])
+@login_required
 def is_fav():
     """
     Devuleve true si la cancion esta en la lista de favoritos del usuario especificado
@@ -974,6 +986,7 @@ def is_fav():
 
 
 @APP.route('/search_list', methods=['POST', 'GET'])  # Test DONE
+@login_required
 def buscar_listas():
     """
     Busca una lista de reproducción en la base de datos
@@ -988,6 +1001,7 @@ def buscar_listas():
 
 
 @APP.route('/search', methods=['POST', 'GET'])  # Test DONE
+@login_required
 def buscar_general():
     """
     Devuelve en formato json los resultados de la busqueda de canciones por autor, artistas y albúm
@@ -1004,6 +1018,7 @@ def buscar_general():
 
 
 @APP.route('/search_in_list', methods=['POST', 'GET'])  # Test DONE
+@login_required
 def buscar_general_lista():
     """
     Devuelve en formato json los resultados de la busqueda de canciones por autor, artistas y
@@ -1023,6 +1038,7 @@ def buscar_general_lista():
 
 
 @APP.route('/filter_category', methods=['POST', 'GET'])  # Test DONE
+@login_required
 def filter_category():
     """
     Devuelve una lista de canciones pertenecientes a las categorias en el filtro
@@ -1037,6 +1053,7 @@ def filter_category():
 
 
 @APP.route('/filter_category_in_list', methods=['POST', 'GET'])  # Test DONE
+@login_required
 def filter_category_list():
     """
     Devuelve una lista de canciones pertenecientes a las categorias en el filtro y a la lista de
@@ -1056,6 +1073,7 @@ def filter_category_list():
 
 
 @APP.route('/test', methods=['POST', 'GET'])  # Test DONE
+@login_required
 def test():
     """
     Test para mostrar que el servidor responde peticiones
@@ -1113,6 +1131,7 @@ def send_mail(email, token):
 
 
 @APP.route('/register', methods=['POST', 'GET'])
+@login_required
 def registro():
     """
     Registrar el usuario y sus datos en la base de datos
@@ -1164,6 +1183,7 @@ def registro():
 
 
 @APP.route('/confirm_email/<token>', methods=['POST', 'GET'])
+@login_required
 def confirmar(token):
     expiration = 3600
     serializer = URLSafeTimedSerializer(APP.config['SECRET_KEY'])
@@ -1192,6 +1212,7 @@ def confirmar(token):
 
 
 @APP.route('/delete_user', methods=['POST', 'GET'])
+@login_required
 def delete_user():
     """
     Eliminar el usuario especificado de la base de datos
@@ -1218,6 +1239,7 @@ def delete_user():
 
 
 @APP.route('/sign_in', methods=['POST', 'GET'])
+@login_required
 def inicio_sesion():
     """
     Inicio de sesion
@@ -1240,6 +1262,7 @@ def inicio_sesion():
 
 
 @APP.route('/info_usuario', methods=['POST', 'GET'])
+@login_required
 def info_usuario():
     """
     Devuelve la información básica de un usuario
@@ -1253,6 +1276,7 @@ def info_usuario():
 
 
 @APP.route('/modify', methods=['POST', 'GET'])
+@login_required
 def modificar_perfil():
     """
     Modifica los datos de un usuario a partir de los datos recibidos en la peticion.
@@ -1315,6 +1339,7 @@ def modificar_perfil():
 
 
 @APP.route('/search_users', methods=['POST', 'GET'])
+@login_required
 def search_user():
     """
     Busca los usuarios que coinciden con la cadena introducida
@@ -1331,6 +1356,7 @@ def search_user():
 
 
 @APP.route('/suscription', methods=['POST', 'GET'])
+@login_required
 def suscripcion():
     """
     Se sucribe a un artista
@@ -1362,6 +1388,7 @@ def suscripcion():
 
 
 @APP.route('/unsuscribe', methods=['POST', 'GET'])
+@login_required
 def desuscribir():
     """
     Se elimina la suscripcion
@@ -1393,6 +1420,7 @@ def desuscribir():
 
 
 @APP.route('/solicitud_amistad', methods=['POST', 'GET'])
+@login_required
 def solicitud_amistad():
     """
     Realiza una peticion de amistad
@@ -1435,6 +1463,7 @@ def solicitud_amistad():
 
 
 @APP.route('/responder_peticion', methods=['POST', 'GET'])
+@login_required
 def responder_peticion():
     peticion, response = leer_datos(request, ['peticion', 'respuesta'])
 
@@ -1457,6 +1486,7 @@ def responder_peticion():
 
 
 @APP.route('/delete_friend', methods=['POST', 'GET'])
+@login_required
 def eliminar_amigo():
     usuario, ya_no_amigo = leer_datos(request, ['email', 'amigo'])
 
@@ -1485,6 +1515,7 @@ def eliminar_amigo():
 
 
 @APP.route('/set_last_song', methods=['POST', 'GET'])
+@login_required
 def set_ultima_cancion():
     usuario, cancion, segundo, lista = leer_datos(request, ["email",
                                                             "cancion",
@@ -1521,6 +1552,7 @@ def set_ultima_cancion():
 
 
 @APP.route('/get_last_song', methods=['POST', 'GET'])
+@login_required
 def get_ultima_cancion():
     usuario = leer_datos(request, ["email"])
 
@@ -1550,6 +1582,7 @@ def get_ultima_cancion():
 
 
 @APP.route('/set_token', methods=['POST', 'GET'])
+@login_required
 def set_token():
     usuario, token = leer_datos(request, ["email", "token"])
 
@@ -1570,6 +1603,7 @@ def set_token():
 
 
 @APP.route('/get_token', methods=['POST', 'GET'])
+@login_required
 def get_token():
     usuario = leer_datos(request, ["email"])
 
@@ -1587,6 +1621,7 @@ def get_token():
 
 
 @APP.route('/share_<tipo>', methods=['POST', 'GET'])
+@login_required
 def compartir(tipo):
     """
     Comparte un elemento de tipo <tipo> desde el emisor al receptor
@@ -1651,6 +1686,7 @@ def compartir(tipo):
 
 
 @APP.route('/unnotify_<tipo>', methods=['POST', 'GET'])
+@login_required
 def quitar_notificacion(tipo):
     """
     Quita el flag notificacion del elemento compartido
@@ -1683,6 +1719,7 @@ def quitar_notificacion(tipo):
 
 
 @APP.route('/unshare_<tipo>', methods=['POST', 'GET'])
+@login_required
 def dejar_compartir_lista(tipo):
     """
     Elimina la comparticion del elemento
@@ -1718,6 +1755,7 @@ def dejar_compartir_lista(tipo):
 
 
 @APP.route('/add_list', methods=['POST', 'GET'])
+@login_required
 def agregar_lista_compartida():
     """
     Añade una copia de una lista de reproduccion a tus listas
@@ -1762,6 +1800,7 @@ def agregar_lista_compartida():
 
 
 @APP.route('/sign_s3')
+@login_required
 def sign_s3():
     s3_bucket = os.environ.get('S3_BUCKET')
 
