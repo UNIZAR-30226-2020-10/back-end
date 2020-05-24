@@ -27,7 +27,7 @@ def create_app():
     app_created.config['MAIL_USE_TLS'] = True
     app_created.config['MAIL_USERNAME'] = 'tuneit.music@gmail.com'  # enter your email here
     app_created.config['MAIL_DEFAULT_SENDER'] = 'tuneit.music@gmail.com'  # enter your email here
-    app_created.config['MAIL_PASSWORD'] = 'tuneit_password1'
+    app_created.config['MAIL_PASSWORD'] = 'passelon1'
 
     mail = Mail(app_created)
 
