@@ -1515,6 +1515,11 @@ def get_ultima_cancion():
                             "Segundo": None,
                             "Lista": None})
 
+        lista = fetch_data_by_id(Lista, usuario.id_ultima_lista)
+        if lista == "error":
+            usuario.id_ultima_lista = None
+            DB.session.commit()
+
         return jsonify({"Cancion": listar_canciones([usuario.ultima_cancion]),
                         "Segundo": usuario.segundo_ultima_cancion,
                         "Lista": usuario.id_ultima_lista})
@@ -1605,6 +1610,12 @@ def compartir(tipo):
                                email_usuario_notificante=emisor)
 
         elif tipo == "podcast":
+
+            podcast = DB.session.query(SeriePodcast).filter_by(id=elemento).first()
+            if podcast is None:
+                podcast = SeriePodcast(id=elemento, nombre="Podcast %d" % elemento)
+                DB.session.add(podcast)
+
             compartida = tabla(id_serie_podcast=elemento,
                                email_usuario_notificado=receptor,
                                email_usuario_notificante=emisor)
@@ -1630,6 +1641,8 @@ def quitar_notificacion(tipo):
     if tipo == "list":
         tabla = ListaCompartida
     elif tipo == "song":
+        tabla = CancionCompartida
+    elif tipo == "podcast":
         tabla = CancionCompartida
     else:
         return "Url incorrecta"
@@ -1663,6 +1676,9 @@ def dejar_compartir_lista(tipo):
     elif tipo == "song":
         tabla = CancionCompartida
         elemento = leer_datos(request, ["cancion"])
+    elif tipo == "podcast":
+        tabla = PodcastCompartido
+        elemento = leer_datos(request, ["podcast"])
     else:
         return "Url incorrecta"
     try:
