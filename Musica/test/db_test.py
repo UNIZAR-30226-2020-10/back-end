@@ -155,9 +155,9 @@ canciones_compartidas = [
 ]
 
 fotos = [
+    Foto(nombre='Default', url='https://psoftware.s3.amazonaws.com/fotos_perfil/default.jpg'),
     Foto(nombre='Elon', url='https://psoftware.s3.amazonaws.com/fotos_perfil/elon.jpeg'),
     Foto(nombre='Karen', url='https://psoftware.s3.amazonaws.com/fotos_perfil/karen.png'),
-    Foto(nombre='Default', url='https://psoftware.s3.amazonaws.com/fotos_perfil/default.jpg'),
     Foto(nombre='Alberto', url='https://psoftware.s3.amazonaws.com/fotos_perfil/alberto.jpeg'),
     Foto(nombre='Alejandro', url='https://psoftware.s3.amazonaws.com/fotos_perfil/alejandro.jpeg'),
     Foto(nombre='Álvaro', url='https://psoftware.s3.amazonaws.com/fotos_perfil/alvaro.jpeg'),

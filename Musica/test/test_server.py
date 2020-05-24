@@ -170,7 +170,7 @@ def get_single_artist_esperado(artista):
 
 
 def get_single_user_esperado(usuario):
-    return [{"Nombre": usuario.nombre, "Imagen": usuario.foto, "Email": usuario.email,
+    return [{"Nombre": usuario.nombre, "Imagen": usuario.foto.url, "Email": usuario.email,
              "Fecha": usuario.fecha_nacimiento, "Pais": usuario.pais, "Token":
                  usuario.token}]
 
@@ -202,6 +202,10 @@ class MyTestCase(unittest.TestCase):
         DB.session.close()
         DB.drop_all()
         DB.create_all()
+        foto = Foto(nombre='Default',
+                    url='https://psoftware.s3.amazonaws.com/fotos_perfil/default.jpg')
+        DB.session.add(foto)
+        DB.session.commit()
 
     def test_server(self):
         status, res = curl('http://localhost:5000/test?test=Success')

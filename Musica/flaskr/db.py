@@ -254,7 +254,7 @@ class Usuario(DB.Model):
     # Usuario <- Lista 'ultima'
     id_ultima_lista = DB.Column(DB.Integer)
     # Usuario <- Foto 'foto_perfil'
-    id_foto = DB.Column(DB.Integer, DB.ForeignKey('foto.id'))
+    id_foto = DB.Column(DB.Integer, DB.ForeignKey('foto.id'), default=1)
     foto = DB.relationship('Foto', back_populates="usuarios")
 
 
