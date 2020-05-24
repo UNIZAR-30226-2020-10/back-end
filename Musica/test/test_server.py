@@ -11,6 +11,10 @@ def curl(url):
     res = io.BytesIO()
     c.setopt(c.URL, url)
     c.setopt(c.WRITEDATA, res)
+    c.setopt(p.HTTPHEADER,
+             [
+                 "Authorization: Basic "
+                 "YjMwS1pmVWk3K05aRWVsL0hCQnhwdz09OjNyREd6eno0NEMzb3dvQXdWRTZWZ1E9PQ=="])
     c.perform()
     status = c.getinfo(c.RESPONSE_CODE)
 
@@ -135,8 +139,6 @@ def comprobar_json(obj, peticion, res_esperado):
     status, res = curl(peticion)
     obj.assertRegex(str(status), '2[0-9][0-9]', "Peticion no exitosa")
 
-    print(res)
-
     correcto, data = is_json(res)
     obj.assertEqual(correcto, True, "El contenido devuelto no tiene el formato correcto")
 
@@ -193,7 +195,7 @@ def get_single_list_esperada(lista):
 
 
 def get_single_podcast_esperado(podcast):
-    return [podcast.id]
+    return podcast.id
 
 
 def compartido_esperado(elemento, elemento_compartido, tipo):
@@ -373,7 +375,7 @@ class MyTestCase(unittest.TestCase):
 
         res_esperado = compartido_esperado(podcast, podcast_comp, "Podcast")
 
-        comprobar_json(self, 'http://localhost:5000/list_podcast_compartido?email=%s' %
+        comprobar_json(self, 'http://localhost:5000/list_podcast_compartidos?email=%s' %
                        usuario.email,
                        res_esperado)
 
