@@ -1123,8 +1123,8 @@ def get_user(email):
 def send_mail(email, token):
     msg = Message(
         "Confirmation Email",
-        body='\033[1mTUNEIT\033[1m\n\nPara confirmar tu usuario ' +
-             "haz click en el siguiente enlace\nhttps://psoftware.herokuapp.com/confirm_email/" +
+        body='TUNEIT\n\nPara confirmar tu usuario ' +
+             "haz click en el siguiente enlace:\nhttps://psoftware.herokuapp.com/confirm_email/" +
              token,
         recipients=[email],
         sender=APP.config["MAIL_DEFAULT_SENDER"]
