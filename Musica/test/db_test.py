@@ -164,7 +164,9 @@ fotos = [
     Foto(nombre='Germán', url='https://psoftware.s3.amazonaws.com/fotos_perfil/german.jpeg'),
     Foto(nombre='Luis', url='https://psoftware.s3.amazonaws.com/fotos_perfil/luis.jpeg'),
     Foto(nombre='Óscar', url='https://psoftware.s3.amazonaws.com/fotos_perfil/oscar.jpeg'),
-    Foto(nombre='Profesor', url='https://psoftware.s3.amazonaws.com/fotos_perfil/profesor.jpg')
+    Foto(nombre='Profesor', url='https://psoftware.s3.amazonaws.com/fotos_perfil/profesor.jpg'),
+    Foto(nombre='Saúl', url='https://psoftware.s3.amazonaws.com/fotos_perfil/saul.jpeg')
+
 ]
 
 DB.session.add_all(categorias)
