@@ -13,7 +13,7 @@ from psycopg2.errors import UniqueViolation, InvalidDatetimeFormat
 from sqlalchemy.exc import DataError, OperationalError, IntegrityError
 from flaskr.db import APP, fetch_data_by_id, Lista, Cancion, DB, Categoria, Artista, leer_todo, \
     Usuario, Aparicion, Album, SeriePodcast, ListaPodcast, Solicitud, MAIL, ListaCompartida, \
-    CancionCompartida, PodcastCompartido
+    CancionCompartida, PodcastCompartido, Foto
 from flask_mail import Message
 import boto3
 
@@ -131,6 +131,8 @@ def listar(tipo, tabla, usuario=None):
             dictionary = listar_albums(dato)
         elif tipo == "categoria":
             dictionary = listar_categorias(dato)
+        elif tipo == "foto":
+            dictionary = listar_foto_perfil(dato)
         else:
             dictionary = listar_canciones(dato)
 
@@ -240,7 +242,8 @@ def listar_usuarios(lista):
     usuarios = []
     for usuario in lista:
         if usuario.confirmado:
-            dictionary = {"Nombre": usuario.nombre, "Imagen": usuario.foto, "Email": usuario.email,
+            dictionary = {"Nombre": usuario.nombre, "Imagen": usuario.foto.url,
+                          "Email": usuario.email,
                           "Fecha": usuario.fecha_nacimiento, "Pais": usuario.pais, "Token":
                               usuario.token}
             usuarios.append(dictionary)
@@ -290,6 +293,15 @@ def listar_podcast_compartidos(lista):
                "Emisor": listar_usuarios([element.notificante]),
                "Receptor": listar_usuarios([element.notificado]),
                "Notificacion": element.notificacion}
+        dictionary.append(res)
+
+    return dictionary
+
+
+def listar_foto_perfil(lista):
+    dictionary = []
+    for element in lista:
+        res = {"Url": element.url, "ID": element.id, "Nombre": element.nombre}
         dictionary.append(res)
 
     return dictionary
@@ -443,7 +455,7 @@ def listar_datos_usuario(usuario):
              "Password": usuario.password,
              "fecha": usuario.fecha_nacimiento.strftime("%A, %d %b %Y"),
              "Pais": usuario.pais,
-             "Foto": usuario.foto}
+             "Foto": usuario.foto.url}
 
     return dicty
 
@@ -663,6 +675,9 @@ def listing(tipo):
     elif tipo == "canciones_compartidas_conmigo":
         usuario = leer_datos(request, ["email"])
         resultado = listar("canciones_compartidas_conmigo", None, usuario)
+
+    elif tipo == "image":
+        resultado = listar("foto", Foto)
 
     if resultado is None:
         return "Url incorrecta"
@@ -1248,6 +1263,7 @@ def modificar_perfil():
         - fecha: formato MM(/ | -)DD(/ | -)AAAA NO OBLIGATORIO
         - nombre: NO OBLIGATORIO
         - pais: NO OBLIGATORIO
+        - foto: id de la foto NO OBLIGATORIO
     :return:
     """
     etiquetas = []
@@ -1282,6 +1298,9 @@ def modificar_perfil():
 
         if "pais" in etiquetas:
             usuario.pais = datos["pais"]
+
+        if "imagen" in etiquetas:
+            usuario.id_foto = int(datos["imagen"])
 
         DB.session.commit()
 
@@ -1613,7 +1632,7 @@ def compartir(tipo):
 
             podcast = DB.session.query(SeriePodcast).filter_by(id=elemento).first()
             if podcast is None:
-                podcast = SeriePodcast(id=elemento, nombre="Podcast %d" % elemento)
+                podcast = SeriePodcast(id=elemento, nombre="Podcast %s" % elemento)
                 DB.session.add(podcast)
 
             compartida = tabla(id_serie_podcast=elemento,
