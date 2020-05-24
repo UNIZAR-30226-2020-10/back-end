@@ -648,7 +648,7 @@ def listing(tipo):
         usuario = leer_datos(request, ["email"])
         resultado = listar("amistades", None, usuario)
 
-    elif tipo == "peticiones_recibidas":
+    elif tipo == "peticiones_recibidas":  # TEST DONE
         usuario = leer_datos(request, ["email"])
         resultado = listar("peticiones_recibidas", None, usuario)
 
@@ -660,11 +660,11 @@ def listing(tipo):
         usuario = leer_datos(request, ["email"])
         resultado = listar("listas_compartidas", None, usuario)
 
-    elif tipo == "listas_compartidas_conmigo":
+    elif tipo == "listas_compartidas_conmigo":  # TEST DONE
         usuario = leer_datos(request, ["email"])
         resultado = listar("listas_compartidas_conmigo", None, usuario)
 
-    elif tipo == "podcast_compartidos":
+    elif tipo == "podcast_compartidos":  # TEST DONE
         usuario = leer_datos(request, ["email"])
         resultado = listar("podcast_compartidos", None, usuario)
 
@@ -672,7 +672,7 @@ def listing(tipo):
         usuario = leer_datos(request, ["email"])
         resultado = listar("canciones_compartidas", None, usuario)
 
-    elif tipo == "canciones_compartidas_conmigo":
+    elif tipo == "canciones_compartidas_conmigo":  # TEST DONE
         usuario = leer_datos(request, ["email"])
         resultado = listar("canciones_compartidas_conmigo", None, usuario)
 
@@ -1738,7 +1738,13 @@ def agregar_lista_compartida():
         if lista == "error":
             return "No existe lista"
 
-        new_list = Lista(nombre=lista.nombre, descripcion=lista.descripcion, foto=lista.foto)
+        if lista.nombre == "Favoritos":
+            nombre = "Favoritos de " + lista.usuario.nombre
+        else:
+            nombre = lista.nombre
+
+        new_list = Lista(nombre=nombre, descripcion=lista.descripcion,
+                         foto='https://psoftware.s3.amazonaws.com/LogoAppFondoEscalaGrises.png')
 
         for aparicion in lista.apariciones:
             new_list.apariciones.append(Aparicion(id_cancion=aparicion.id_cancion,

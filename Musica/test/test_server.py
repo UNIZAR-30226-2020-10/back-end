@@ -77,6 +77,14 @@ def insert_categoria():
     return categoria
 
 
+def insert_podcast(id):
+    podcast = SeriePodcast(id=id, nombre="Podcast")
+    DB.session.add(podcast)
+    DB.session.commit()
+
+    return podcast
+
+
 def insertar_cancion_album(nombre_cancion, nombre_album):
     album = insertar_album(nombre_album)
     cancion = insertar_cancion(nombre_cancion, album.nombre)
@@ -126,6 +134,8 @@ def insertar_cancion_album_artista_lista(nombre_cancion, nombre_album, nombre_ar
 def comprobar_json(obj, peticion, res_esperado):
     status, res = curl(peticion)
     obj.assertRegex(str(status), '2[0-9][0-9]', "Peticion no exitosa")
+
+    print(res)
 
     correcto, data = is_json(res)
     obj.assertEqual(correcto, True, "El contenido devuelto no tiene el formato correcto")
@@ -182,11 +192,22 @@ def get_single_list_esperada(lista):
             'Nombre': lista.nombre}
 
 
-def compartido_esperado(elemento, elemento_compartido):
+def get_single_podcast_esperado(podcast):
+    return [podcast.id]
+
+
+def compartido_esperado(elemento, elemento_compartido, tipo):
+    if tipo == "Cancion":
+        res = get_single_song_esperado(elemento)[0]
+    if tipo == "Listas":
+        res = get_single_list_esperada(elemento)
+    if tipo == "Podcast":
+        res = get_single_podcast_esperado(elemento)
+
     return [{'ID': elemento_compartido.id,
              'Emisor': get_single_user_esperado(elemento_compartido.notificante),
              'Receptor': get_single_user_esperado(elemento_compartido.notificado),
-             'Listas': get_single_list_esperada(elemento),
+             tipo: res,
              'Notificacion': elemento_compartido.notificacion}]
 
 
@@ -302,7 +323,7 @@ class MyTestCase(unittest.TestCase):
                        usuario2.email,
                        res_esperado)
 
-    def test_lista_compartida_conmigo(self):
+    def test_list_lista_compartida_conmigo(self):
         lista, usuario = insert_lista_test("prueba@gmail.com")
         usuario2 = insertar_usuario("prueba2@gmail.com")
 
@@ -313,10 +334,54 @@ class MyTestCase(unittest.TestCase):
         DB.session.add(lista_comp)
         DB.session.commit()
 
-        res_esperado = compartido_esperado(lista, lista_comp)
+        res_esperado = compartido_esperado(lista, lista_comp, "Listas")
 
         comprobar_json(self, 'http://localhost:5000/list_listas_compartidas_conmigo?email=%s' %
                        usuario.email,
+                       res_esperado)
+
+    def test_list_cancion_compartida_conmigo(self):
+        cancion, album, lista, aparicion, usuario = \
+            insertar_cancion_album_lista("Cancion", "Album", "prueba@gmail.com")
+        usuario2 = insertar_usuario("prueba2@gmail.com")
+
+        cancion_comp = CancionCompartida(email_usuario_notificado=usuario.email,
+                                         email_usuario_notificante=usuario2.email,
+                                         id_cancion=cancion.id)
+
+        DB.session.add(cancion_comp)
+        DB.session.commit()
+
+        res_esperado = compartido_esperado(cancion, cancion_comp, "Cancion")
+
+        comprobar_json(self, 'http://localhost:5000/list_canciones_compartidas_conmigo?email=%s' %
+                       usuario.email,
+                       res_esperado)
+
+    def test_list_podcast_compartidos(self):
+        lista, usuario = insert_lista_test("prueba@gmail.com")
+        usuario2 = insertar_usuario("prueba2@gmail.com")
+
+        podcast = insert_podcast("a1")
+
+        podcast_comp = PodcastCompartido(email_usuario_notificado=usuario.email,
+                                         email_usuario_notificante=usuario2.email,
+                                         id_serie_podcast=podcast.id)
+
+        DB.session.add(podcast_comp)
+        DB.session.commit()
+
+        res_esperado = compartido_esperado(podcast, podcast_comp, "Podcast")
+
+        comprobar_json(self, 'http://localhost:5000/list_podcast_compartido?email=%s' %
+                       usuario.email,
+                       res_esperado)
+
+    def test_list_images(self):
+        res_esperado = [{"Url": 'https://psoftware.s3.amazonaws.com/fotos_perfil/default.jpg',
+                         "ID": 1, "Nombre": "Default"}]
+
+        comprobar_json(self, 'http://localhost:5000/list_image',
                        res_esperado)
 
     # ----------------------------------------------------------------------------------------------

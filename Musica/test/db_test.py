@@ -303,7 +303,7 @@ for i in range(len(artistas) // 2):
 
 # Relacion 'foto_perfil'
 # Elon
-usuarios[0].foto = fotos[0]
-usuarios[1].foto = fotos[1]
+usuarios[0].foto = fotos[1]
+usuarios[1].foto = fotos[2]
 
 DB.session.commit()
