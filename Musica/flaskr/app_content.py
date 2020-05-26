@@ -26,13 +26,12 @@ pass_front = "3rDGzzz44C3owoAwVE6VgQ=="
 # ORDENAR CANCIONES Y LISTAS
 # AÑADIR / ELIMINAR / MODIFICAR CATEGORIAS
 
-
+# Wrapper que comprueba las credenciales de autentificación
 def login_required(f):
     @wraps(f)
     def wrap(*args, **kwargs):
         if request.authorization is None:
             return "Acceso no autorizado"
-        print(request.authorization)
         if request.authorization.username == username_frontend and \
                 request.authorization.password == pass_front:
             return f(*args, **kwargs)
@@ -143,13 +142,6 @@ def listar_canciones(canciones):
     """
     Formatea los datos de una lista de canciones para devolverlos como una lista de diccionarios
     Auxiliar para transformar los datos en formato compatible con json
-    Los diccionarios contienen:
-        - ID
-        - Nombre
-        - Artistas
-        - Albúm
-        - Imagen
-        - URL de la cancion
     :param canciones:
     :return:
     """
@@ -252,6 +244,12 @@ def listar_usuarios(lista):
 
 
 def listar_peticiones(lista):
+    """
+    Formatea las peticiones de amistad de un usuario para devolverlas como una lista
+    Auxiliar para transformar los datos en formato compatible con json
+    :param lista:
+    :return:
+    """
     peticiones = []
     for peticion in lista:
         dictionary = {"ID": peticion.id, "Emisor": listar_usuarios([peticion.notificante]),
@@ -262,6 +260,12 @@ def listar_peticiones(lista):
 
 
 def listar_listas_compartidas(lista):
+    """
+    Formatea las listas compartidas de un usuario para devolverlas como una lista
+    Auxiliar para transformar los datos en formato compatible con json
+    :param lista:
+    :return:
+    """
     dictionary = []
     for element in lista:
         res = {"Listas": listar_datos_lista(element.lista), "ID": element.id,
@@ -274,6 +278,12 @@ def listar_listas_compartidas(lista):
 
 
 def listar_canciones_compartidas(lista):
+    """
+    Formatea las canciones compartidas de un usuario para devolverlas como una lista
+    Auxiliar para transformar los datos en formato compatible con json
+    :param lista:
+    :return:
+    """
     canciones = []
 
     for song in lista:
@@ -287,6 +297,12 @@ def listar_canciones_compartidas(lista):
 
 
 def listar_podcast_compartidos(lista):
+    """
+    Formatea los podcast compartidos de un usuario para devolverlas como una lista
+    Auxiliar para transformar los datos en formato compatible con json
+    :param lista:
+    :return:
+    """
     dictionary = []
     for element in lista:
         res = {"Podcast": element.id_serie_podcast, "ID": element.id,
@@ -299,6 +315,12 @@ def listar_podcast_compartidos(lista):
 
 
 def listar_foto_perfil(lista):
+    """
+    Formatea las imagenes de perfil para devolverlas en forma de lista de diccionarios
+    Auxiliar para transformar los datos en un formato compatible con json
+    :param lista:
+    :return:
+    """
     dictionary = []
     for element in lista:
         res = {"Url": element.url, "ID": element.id, "Nombre": element.nombre}
@@ -349,6 +371,20 @@ def listar_datos(tipo, tabla, dato):
 
 
 def listar_datos_cancion(cancion):
+    """
+    Formatea una cancion como un diccionario
+    Auxiliar para transformar los datos en formato compatible con json
+    El diccionario contiene:
+        - ID
+        - Nombre
+        - Artistas
+        - Album
+        - URL
+        - Imagen
+        - Categorias
+    :param cancion:
+    :return:
+    """
     dictionary = {"ID": cancion.id, "Nombre": cancion.nombre, "Artistas": []}
     for artist in cancion.artistas:
         dictionary["Artistas"].append(artist.nombre)
@@ -1121,6 +1157,12 @@ def get_user(email):
 
 
 def send_mail(email, token):
+    """
+    Manda un email de confirmación a un usuario
+    :param email:
+    :param token:
+    :return:
+    """
     msg = Message(
         "Confirmation Email",
         body='TUNEIT\n\nPara confirmar tu usuario ' +
@@ -1186,6 +1228,11 @@ def registro():
 
 @APP.route('/confirm_email/<token>', methods=['POST', 'GET'])
 def confirmar(token):
+    """
+    Confirma un un usuario usando su token identificador
+    :param token:
+    :return:
+    """
     expiration = 3600
     serializer = URLSafeTimedSerializer(APP.config['SECRET_KEY'])
 
@@ -1425,6 +1472,9 @@ def desuscribir():
 def solicitud_amistad():
     """
     Realiza una peticion de amistad
+    Parametros de la peticion:
+        - emisor
+        - receptor
     :return:
     """
     emisor, receptor = leer_datos(request, ["emisor", "receptor"])
@@ -1466,6 +1516,13 @@ def solicitud_amistad():
 @APP.route('/responder_peticion', methods=['POST', 'GET'])
 @login_required
 def responder_peticion():
+    """
+    Acepta o rechaza una peticion de amistad de un usuario
+    Parametros:
+        - peticion: id de la peticion
+        - respuesta: Acepto o Rechazo
+    :return:
+    """
     peticion, response = leer_datos(request, ['peticion', 'respuesta'])
 
     try:
@@ -1489,6 +1546,13 @@ def responder_peticion():
 @APP.route('/delete_friend', methods=['POST', 'GET'])
 @login_required
 def eliminar_amigo():
+    """
+    Elimina la relación de amistad entre dos usuarios
+    Parametros de la peticion:
+        - email: email del usuario
+        - amigo: email del amigo
+    :return:
+    """
     usuario, ya_no_amigo = leer_datos(request, ['email', 'amigo'])
 
     try:
@@ -1518,6 +1582,15 @@ def eliminar_amigo():
 @APP.route('/set_last_song', methods=['POST', 'GET'])
 @login_required
 def set_ultima_cancion():
+    """
+    Guarda la ultima cancion, lista y segundo de la reproduccion
+    Parametros de la peticion:
+        - email
+        - cancion
+        - segundo
+        - lista
+    :return:
+    """
     usuario, cancion, segundo, lista = leer_datos(request, ["email",
                                                             "cancion",
                                                             "segundo",
@@ -1555,6 +1628,12 @@ def set_ultima_cancion():
 @APP.route('/get_last_song', methods=['POST', 'GET'])
 @login_required
 def get_ultima_cancion():
+    """
+    Devuelve el estado de reproducción guardado con set last song
+    Parametros de la peticion:
+        - email
+    :return:
+    """
     usuario = leer_datos(request, ["email"])
 
     try:
@@ -1585,6 +1664,13 @@ def get_ultima_cancion():
 @APP.route('/set_token', methods=['POST', 'GET'])
 @login_required
 def set_token():
+    """
+    Guarda el token para las notificaciones android
+    Parametros de la petición:
+        - email
+        - token
+    :return:
+    """
     usuario, token = leer_datos(request, ["email", "token"])
 
     try:
@@ -1606,6 +1692,12 @@ def set_token():
 @APP.route('/get_token', methods=['POST', 'GET'])
 @login_required
 def get_token():
+    """
+    Obtiene el token de un usuario
+    Parametros de la petición:
+        - email
+    :return:
+    """
     usuario = leer_datos(request, ["email"])
 
     try:
